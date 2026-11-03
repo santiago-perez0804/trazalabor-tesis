@@ -1,0 +1,28 @@
+# Secretos y credenciales
+app/config/*.json
+!app/config/ejemplo.json
+**/google-services.json
+app/lib/firebase_options.dart
+**/key.properties
+*.jks
+*.keystore
+.env
+.env.*
+supabase/.env
+supabase/functions/.env
+
+# Supabase CLI
+supabase/.temp/
+supabase/.branches/
+
+# Respaldos locales
+respaldos/
+
+# Sistema / editores
+.DS_Store
+Thumbs.db
+.idea/
+*.iml
+
+# Documento de la tesis (se versiona aparte si se desea)
+# docs/TESIS_FINAL.pdf
