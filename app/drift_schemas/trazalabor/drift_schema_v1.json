@@ -1,0 +1,1302 @@
+{
+  "_meta": {
+    "description": "This file contains a serialized version of schema entities for drift.",
+    "version": "1.3.0"
+  },
+  "options": {
+    "store_date_time_values_as_text": true
+  },
+  "entities": [
+    {
+      "id": 0,
+      "references": [],
+      "type": "table",
+      "data": {
+        "name": "usuario",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "id",
+            "getter_name": "id",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "auth_id",
+            "getter_name": "authId",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "nombre",
+            "getter_name": "nombre",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "telefono",
+            "getter_name": "telefono",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "defaultConstraints": "UNIQUE",
+            "dialectAwareDefaultConstraints": {
+              "sqlite": "UNIQUE"
+            },
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              "unique"
+            ]
+          },
+          {
+            "name": "rol",
+            "getter_name": "rol",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              {
+                "check": {
+                  "dart_expression": {
+                    "elements": [
+                      {
+                        "lexeme": "rol",
+                        "tag": "rol"
+                      },
+                      ".isIn(const ['ENCARGADO','TRABAJADOR'])"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "name": "especialidad",
+            "getter_name": "especialidad",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "activo",
+            "getter_name": "activo",
+            "moor_type": "bool",
+            "nullable": false,
+            "customConstraints": null,
+            "defaultConstraints": "CHECK (\"activo\" IN (0, 1))",
+            "dialectAwareDefaultConstraints": {
+              "sqlite": "CHECK (\"activo\" IN (0, 1))"
+            },
+            "default_dart": "const CustomExpression('1')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "created_at_device",
+            "getter_name": "createdAtDevice",
+            "moor_type": "dateTime",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "received_at_server",
+            "getter_name": "receivedAtServer",
+            "moor_type": "dateTime",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [],
+        "explicit_pk": [
+          "id"
+        ]
+      }
+    },
+    {
+      "id": 1,
+      "references": [],
+      "type": "table",
+      "data": {
+        "name": "unidad_productiva",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "id",
+            "getter_name": "id",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "nombre",
+            "getter_name": "nombre",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "tipo",
+            "getter_name": "tipo",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              {
+                "check": {
+                  "dart_expression": {
+                    "elements": [
+                      {
+                        "lexeme": "tipo",
+                        "tag": "tipo"
+                      },
+                      ".isIn(const ['LOTE','POTRERO','INSTALACION'])"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "name": "superficie_ha",
+            "getter_name": "superficieHa",
+            "moor_type": "double",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "codigo_qr",
+            "getter_name": "codigoQr",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "defaultConstraints": "UNIQUE",
+            "dialectAwareDefaultConstraints": {
+              "sqlite": "UNIQUE"
+            },
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              "unique"
+            ]
+          },
+          {
+            "name": "latitud",
+            "getter_name": "latitud",
+            "moor_type": "double",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "longitud",
+            "getter_name": "longitud",
+            "moor_type": "double",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "activa",
+            "getter_name": "activa",
+            "moor_type": "bool",
+            "nullable": false,
+            "customConstraints": null,
+            "defaultConstraints": "CHECK (\"activa\" IN (0, 1))",
+            "dialectAwareDefaultConstraints": {
+              "sqlite": "CHECK (\"activa\" IN (0, 1))"
+            },
+            "default_dart": "const CustomExpression('1')",
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [],
+        "explicit_pk": [
+          "id"
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "references": [
+        1,
+        0
+      ],
+      "type": "table",
+      "data": {
+        "name": "tarea",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "id",
+            "getter_name": "id",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "unidad_productiva_id",
+            "getter_name": "unidadProductivaId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "defaultConstraints": "REFERENCES unidad_productiva (id)",
+            "dialectAwareDefaultConstraints": {
+              "sqlite": "REFERENCES unidad_productiva (id)"
+            },
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              {
+                "foreign_key": {
+                  "to": {
+                    "table": "unidad_productiva",
+                    "column": "id"
+                  },
+                  "initially_deferred": false,
+                  "on_update": null,
+                  "on_delete": null
+                }
+              }
+            ]
+          },
+          {
+            "name": "creador_id",
+            "getter_name": "creadorId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "defaultConstraints": "REFERENCES usuario (id)",
+            "dialectAwareDefaultConstraints": {
+              "sqlite": "REFERENCES usuario (id)"
+            },
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              {
+                "foreign_key": {
+                  "to": {
+                    "table": "usuario",
+                    "column": "id"
+                  },
+                  "initially_deferred": false,
+                  "on_update": null,
+                  "on_delete": null
+                }
+              }
+            ]
+          },
+          {
+            "name": "asignado_id",
+            "getter_name": "asignadoId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "defaultConstraints": "REFERENCES usuario (id)",
+            "dialectAwareDefaultConstraints": {
+              "sqlite": "REFERENCES usuario (id)"
+            },
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              {
+                "foreign_key": {
+                  "to": {
+                    "table": "usuario",
+                    "column": "id"
+                  },
+                  "initially_deferred": false,
+                  "on_update": null,
+                  "on_delete": null
+                }
+              }
+            ]
+          },
+          {
+            "name": "tipo_labor",
+            "getter_name": "tipoLabor",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              {
+                "check": {
+                  "dart_expression": {
+                    "elements": [
+                      {
+                        "lexeme": "tipoLabor",
+                        "tag": "tipoLabor"
+                      },
+                      ".isIn(const ['GENERAL','SIEMBRA','APLICACION_FITOSANITARIA','SANIDAD_ANIMAL','MANTENIMIENTO'])"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "name": "descripcion",
+            "getter_name": "descripcion",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "fecha_programada",
+            "getter_name": "fechaProgramada",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "requiere_qr",
+            "getter_name": "requiereQr",
+            "moor_type": "bool",
+            "nullable": false,
+            "customConstraints": null,
+            "defaultConstraints": "CHECK (\"requiere_qr\" IN (0, 1))",
+            "dialectAwareDefaultConstraints": {
+              "sqlite": "CHECK (\"requiere_qr\" IN (0, 1))"
+            },
+            "default_dart": "const CustomExpression('0')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "evidencia_requerida",
+            "getter_name": "evidenciaRequerida",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": "const CustomExpression('\\'NINGUNA\\'')",
+            "default_client_dart": null,
+            "dsl_features": [
+              {
+                "check": {
+                  "dart_expression": {
+                    "elements": [
+                      {
+                        "lexeme": "evidenciaRequerida",
+                        "tag": "evidenciaRequerida"
+                      },
+                      " .isIn(const ['NINGUNA','FOTO','AUDIO','FOTO_Y_AUDIO'])"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "name": "estado_actual",
+            "getter_name": "estadoActual",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": "const CustomExpression('\\'CREADA\\'')",
+            "default_client_dart": null,
+            "dsl_features": [
+              {
+                "check": {
+                  "dart_expression": {
+                    "elements": [
+                      {
+                        "lexeme": "estadoActual",
+                        "tag": "estadoActual"
+                      },
+                      ".isIn(const ['CREADA','ASIGNADA','INICIADA','COMPLETADA','NO_COMPLETADA','VERIFICADA'])"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "name": "created_at_device",
+            "getter_name": "createdAtDevice",
+            "moor_type": "dateTime",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "received_at_server",
+            "getter_name": "receivedAtServer",
+            "moor_type": "dateTime",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [],
+        "explicit_pk": [
+          "id"
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "references": [
+        2
+      ],
+      "type": "table",
+      "data": {
+        "name": "item_checklist",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "id",
+            "getter_name": "id",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "tarea_id",
+            "getter_name": "tareaId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "defaultConstraints": "REFERENCES tarea (id)",
+            "dialectAwareDefaultConstraints": {
+              "sqlite": "REFERENCES tarea (id)"
+            },
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              {
+                "foreign_key": {
+                  "to": {
+                    "table": "tarea",
+                    "column": "id"
+                  },
+                  "initially_deferred": false,
+                  "on_update": null,
+                  "on_delete": null
+                }
+              }
+            ]
+          },
+          {
+            "name": "orden",
+            "getter_name": "orden",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "descripcion",
+            "getter_name": "descripcion",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "tipo_respuesta",
+            "getter_name": "tipoRespuesta",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              {
+                "check": {
+                  "dart_expression": {
+                    "elements": [
+                      {
+                        "lexeme": "tipoRespuesta",
+                        "tag": "tipoRespuesta"
+                      },
+                      ".isIn(const ['CHECK','NUMERO','TEXTO'])"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "name": "obligatorio",
+            "getter_name": "obligatorio",
+            "moor_type": "bool",
+            "nullable": false,
+            "customConstraints": null,
+            "defaultConstraints": "CHECK (\"obligatorio\" IN (0, 1))",
+            "dialectAwareDefaultConstraints": {
+              "sqlite": "CHECK (\"obligatorio\" IN (0, 1))"
+            },
+            "default_dart": "const CustomExpression('0')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "valor",
+            "getter_name": "valor",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "completado",
+            "getter_name": "completado",
+            "moor_type": "bool",
+            "nullable": false,
+            "customConstraints": null,
+            "defaultConstraints": "CHECK (\"completado\" IN (0, 1))",
+            "dialectAwareDefaultConstraints": {
+              "sqlite": "CHECK (\"completado\" IN (0, 1))"
+            },
+            "default_dart": "const CustomExpression('0')",
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [],
+        "explicit_pk": [
+          "id"
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "references": [
+        2,
+        0
+      ],
+      "type": "table",
+      "data": {
+        "name": "evento",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "id",
+            "getter_name": "id",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "tarea_id",
+            "getter_name": "tareaId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "defaultConstraints": "REFERENCES tarea (id)",
+            "dialectAwareDefaultConstraints": {
+              "sqlite": "REFERENCES tarea (id)"
+            },
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              {
+                "foreign_key": {
+                  "to": {
+                    "table": "tarea",
+                    "column": "id"
+                  },
+                  "initially_deferred": false,
+                  "on_update": null,
+                  "on_delete": null
+                }
+              }
+            ]
+          },
+          {
+            "name": "usuario_id",
+            "getter_name": "usuarioId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "defaultConstraints": "REFERENCES usuario (id)",
+            "dialectAwareDefaultConstraints": {
+              "sqlite": "REFERENCES usuario (id)"
+            },
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              {
+                "foreign_key": {
+                  "to": {
+                    "table": "usuario",
+                    "column": "id"
+                  },
+                  "initially_deferred": false,
+                  "on_update": null,
+                  "on_delete": null
+                }
+              }
+            ]
+          },
+          {
+            "name": "tipo",
+            "getter_name": "tipo",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              {
+                "check": {
+                  "dart_expression": {
+                    "elements": [
+                      {
+                        "lexeme": "tipo",
+                        "tag": "tipo"
+                      },
+                      ".isIn(const ['CREADA','ASIGNADA','INICIADA','ITEM_COMPLETADO','QR_VERIFICADO','EVIDENCIA_ADJUNTA','COMPLETADA','NO_COMPLETADA','VERIFICADA','REASIGNADA'])"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "name": "payload",
+            "getter_name": "payload",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": "const CustomExpression('\\'{}\\'')",
+            "default_client_dart": null,
+            "dsl_features": [],
+            "type_converter": {
+              "dart_expr": "conversorJson",
+              "dart_type_name": "Map<String, Object?>"
+            }
+          },
+          {
+            "name": "created_at_device",
+            "getter_name": "createdAtDevice",
+            "moor_type": "dateTime",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "received_at_server",
+            "getter_name": "receivedAtServer",
+            "moor_type": "dateTime",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "latitud",
+            "getter_name": "latitud",
+            "moor_type": "double",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "longitud",
+            "getter_name": "longitud",
+            "moor_type": "double",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [],
+        "explicit_pk": [
+          "id"
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "references": [
+        2,
+        0
+      ],
+      "type": "table",
+      "data": {
+        "name": "evidencia",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "id",
+            "getter_name": "id",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "tarea_id",
+            "getter_name": "tareaId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "defaultConstraints": "REFERENCES tarea (id)",
+            "dialectAwareDefaultConstraints": {
+              "sqlite": "REFERENCES tarea (id)"
+            },
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              {
+                "foreign_key": {
+                  "to": {
+                    "table": "tarea",
+                    "column": "id"
+                  },
+                  "initially_deferred": false,
+                  "on_update": null,
+                  "on_delete": null
+                }
+              }
+            ]
+          },
+          {
+            "name": "usuario_id",
+            "getter_name": "usuarioId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "defaultConstraints": "REFERENCES usuario (id)",
+            "dialectAwareDefaultConstraints": {
+              "sqlite": "REFERENCES usuario (id)"
+            },
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              {
+                "foreign_key": {
+                  "to": {
+                    "table": "usuario",
+                    "column": "id"
+                  },
+                  "initially_deferred": false,
+                  "on_update": null,
+                  "on_delete": null
+                }
+              }
+            ]
+          },
+          {
+            "name": "tipo",
+            "getter_name": "tipo",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              {
+                "check": {
+                  "dart_expression": {
+                    "elements": [
+                      {
+                        "lexeme": "tipo",
+                        "tag": "tipo"
+                      },
+                      ".isIn(const ['FOTO','AUDIO'])"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "name": "ruta_local",
+            "getter_name": "rutaLocal",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "ruta_remota",
+            "getter_name": "rutaRemota",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "tamanio_bytes",
+            "getter_name": "tamanioBytes",
+            "moor_type": "int",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "hash_sha256",
+            "getter_name": "hashSha256",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "created_at_device",
+            "getter_name": "createdAtDevice",
+            "moor_type": "dateTime",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "received_at_server",
+            "getter_name": "receivedAtServer",
+            "moor_type": "dateTime",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [],
+        "explicit_pk": [
+          "id"
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "references": [],
+      "type": "table",
+      "data": {
+        "name": "operacion_pendiente",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "id",
+            "getter_name": "id",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "entidad",
+            "getter_name": "entidad",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "entidad_id",
+            "getter_name": "entidadId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "operacion",
+            "getter_name": "operacion",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              {
+                "check": {
+                  "dart_expression": {
+                    "elements": [
+                      {
+                        "lexeme": "operacion",
+                        "tag": "operacion"
+                      },
+                      ".isIn(const ['INSERT','UPDATE','SUBIDA'])"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "name": "payload",
+            "getter_name": "payload",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [],
+            "type_converter": {
+              "dart_expr": "conversorJson",
+              "dart_type_name": "Map<String, Object?>"
+            }
+          },
+          {
+            "name": "intentos",
+            "getter_name": "intentos",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": "const CustomExpression('0')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "ultimo_error",
+            "getter_name": "ultimoError",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "created_at_device",
+            "getter_name": "createdAtDevice",
+            "moor_type": "dateTime",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "estado",
+            "getter_name": "estado",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": "const CustomExpression('\\'PENDIENTE\\'')",
+            "default_client_dart": null,
+            "dsl_features": [
+              {
+                "check": {
+                  "dart_expression": {
+                    "elements": [
+                      {
+                        "lexeme": "estado",
+                        "tag": "estado"
+                      },
+                      ".isIn(const ['PENDIENTE','ENVIADO','ERROR'])"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [],
+        "explicit_pk": [
+          "id"
+        ]
+      }
+    },
+    {
+      "id": 7,
+      "references": [],
+      "type": "table",
+      "data": {
+        "name": "metadato",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "clave",
+            "getter_name": "clave",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "valor",
+            "getter_name": "valor",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [],
+        "explicit_pk": [
+          "clave"
+        ]
+      }
+    },
+    {
+      "id": 8,
+      "references": [
+        2
+      ],
+      "type": "index",
+      "data": {
+        "on": 2,
+        "name": "idx_tarea_asignado_fecha",
+        "sql": null,
+        "unique": false,
+        "columns": [
+          {
+            "column": "asignado_id",
+            "order_by": null
+          },
+          {
+            "column": "fecha_programada",
+            "order_by": null
+          }
+        ]
+      }
+    },
+    {
+      "id": 9,
+      "references": [
+        4
+      ],
+      "type": "index",
+      "data": {
+        "on": 4,
+        "name": "idx_evento_tarea",
+        "sql": null,
+        "unique": false,
+        "columns": [
+          {
+            "column": "tarea_id",
+            "order_by": null
+          }
+        ]
+      }
+    },
+    {
+      "id": 10,
+      "references": [
+        6
+      ],
+      "type": "index",
+      "data": {
+        "on": 6,
+        "name": "idx_operacion_estado_fecha",
+        "sql": null,
+        "unique": false,
+        "columns": [
+          {
+            "column": "estado",
+            "order_by": null
+          },
+          {
+            "column": "created_at_device",
+            "order_by": null
+          }
+        ]
+      }
+    }
+  ],
+  "fixed_sql": [
+    {
+      "name": "usuario",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"usuario\" (\"id\" TEXT NOT NULL, \"auth_id\" TEXT NULL, \"nombre\" TEXT NOT NULL, \"telefono\" TEXT NOT NULL UNIQUE, \"rol\" TEXT NOT NULL CHECK(\"rol\" IN ('ENCARGADO', 'TRABAJADOR')), \"especialidad\" TEXT NULL, \"activo\" INTEGER NOT NULL DEFAULT 1 CHECK (\"activo\" IN (0, 1)), \"created_at_device\" TEXT NOT NULL, \"received_at_server\" TEXT NULL, PRIMARY KEY (\"id\"));"
+        }
+      ]
+    },
+    {
+      "name": "unidad_productiva",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"unidad_productiva\" (\"id\" TEXT NOT NULL, \"nombre\" TEXT NOT NULL, \"tipo\" TEXT NOT NULL CHECK(\"tipo\" IN ('LOTE', 'POTRERO', 'INSTALACION')), \"superficie_ha\" REAL NULL, \"codigo_qr\" TEXT NOT NULL UNIQUE, \"latitud\" REAL NULL, \"longitud\" REAL NULL, \"activa\" INTEGER NOT NULL DEFAULT 1 CHECK (\"activa\" IN (0, 1)), PRIMARY KEY (\"id\"));"
+        }
+      ]
+    },
+    {
+      "name": "tarea",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"tarea\" (\"id\" TEXT NOT NULL, \"unidad_productiva_id\" TEXT NOT NULL REFERENCES unidad_productiva (id), \"creador_id\" TEXT NOT NULL REFERENCES usuario (id), \"asignado_id\" TEXT NOT NULL REFERENCES usuario (id), \"tipo_labor\" TEXT NOT NULL CHECK(\"tipo_labor\" IN ('GENERAL', 'SIEMBRA', 'APLICACION_FITOSANITARIA', 'SANIDAD_ANIMAL', 'MANTENIMIENTO')), \"descripcion\" TEXT NULL, \"fecha_programada\" TEXT NOT NULL, \"requiere_qr\" INTEGER NOT NULL DEFAULT 0 CHECK (\"requiere_qr\" IN (0, 1)), \"evidencia_requerida\" TEXT NOT NULL DEFAULT 'NINGUNA' CHECK(\"evidencia_requerida\" IN ('NINGUNA', 'FOTO', 'AUDIO', 'FOTO_Y_AUDIO')), \"estado_actual\" TEXT NOT NULL DEFAULT 'CREADA' CHECK(\"estado_actual\" IN ('CREADA', 'ASIGNADA', 'INICIADA', 'COMPLETADA', 'NO_COMPLETADA', 'VERIFICADA')), \"created_at_device\" TEXT NOT NULL, \"received_at_server\" TEXT NULL, PRIMARY KEY (\"id\"));"
+        }
+      ]
+    },
+    {
+      "name": "item_checklist",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"item_checklist\" (\"id\" TEXT NOT NULL, \"tarea_id\" TEXT NOT NULL REFERENCES tarea (id), \"orden\" INTEGER NOT NULL, \"descripcion\" TEXT NOT NULL, \"tipo_respuesta\" TEXT NOT NULL CHECK(\"tipo_respuesta\" IN ('CHECK', 'NUMERO', 'TEXTO')), \"obligatorio\" INTEGER NOT NULL DEFAULT 0 CHECK (\"obligatorio\" IN (0, 1)), \"valor\" TEXT NULL, \"completado\" INTEGER NOT NULL DEFAULT 0 CHECK (\"completado\" IN (0, 1)), PRIMARY KEY (\"id\"));"
+        }
+      ]
+    },
+    {
+      "name": "evento",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"evento\" (\"id\" TEXT NOT NULL, \"tarea_id\" TEXT NOT NULL REFERENCES tarea (id), \"usuario_id\" TEXT NOT NULL REFERENCES usuario (id), \"tipo\" TEXT NOT NULL CHECK(\"tipo\" IN ('CREADA', 'ASIGNADA', 'INICIADA', 'ITEM_COMPLETADO', 'QR_VERIFICADO', 'EVIDENCIA_ADJUNTA', 'COMPLETADA', 'NO_COMPLETADA', 'VERIFICADA', 'REASIGNADA')), \"payload\" TEXT NOT NULL DEFAULT '{}', \"created_at_device\" TEXT NOT NULL, \"received_at_server\" TEXT NULL, \"latitud\" REAL NULL, \"longitud\" REAL NULL, PRIMARY KEY (\"id\"));"
+        }
+      ]
+    },
+    {
+      "name": "evidencia",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"evidencia\" (\"id\" TEXT NOT NULL, \"tarea_id\" TEXT NOT NULL REFERENCES tarea (id), \"usuario_id\" TEXT NOT NULL REFERENCES usuario (id), \"tipo\" TEXT NOT NULL CHECK(\"tipo\" IN ('FOTO', 'AUDIO')), \"ruta_local\" TEXT NULL, \"ruta_remota\" TEXT NULL, \"tamanio_bytes\" INTEGER NULL, \"hash_sha256\" TEXT NOT NULL, \"created_at_device\" TEXT NOT NULL, \"received_at_server\" TEXT NULL, PRIMARY KEY (\"id\"));"
+        }
+      ]
+    },
+    {
+      "name": "operacion_pendiente",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"operacion_pendiente\" (\"id\" TEXT NOT NULL, \"entidad\" TEXT NOT NULL, \"entidad_id\" TEXT NOT NULL, \"operacion\" TEXT NOT NULL CHECK(\"operacion\" IN ('INSERT', 'UPDATE', 'SUBIDA')), \"payload\" TEXT NOT NULL, \"intentos\" INTEGER NOT NULL DEFAULT 0, \"ultimo_error\" TEXT NULL, \"created_at_device\" TEXT NOT NULL, \"estado\" TEXT NOT NULL DEFAULT 'PENDIENTE' CHECK(\"estado\" IN ('PENDIENTE', 'ENVIADO', 'ERROR')), PRIMARY KEY (\"id\"));"
+        }
+      ]
+    },
+    {
+      "name": "metadato",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"metadato\" (\"clave\" TEXT NOT NULL, \"valor\" TEXT NOT NULL, PRIMARY KEY (\"clave\"));"
+        }
+      ]
+    },
+    {
+      "name": "idx_tarea_asignado_fecha",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE INDEX idx_tarea_asignado_fecha ON tarea (asignado_id, fecha_programada)"
+        }
+      ]
+    },
+    {
+      "name": "idx_evento_tarea",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE INDEX idx_evento_tarea ON evento (tarea_id)"
+        }
+      ]
+    },
+    {
+      "name": "idx_operacion_estado_fecha",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE INDEX idx_operacion_estado_fecha ON operacion_pendiente (estado, created_at_device)"
+        }
+      ]
+    }
+  ]
+}

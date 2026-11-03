@@ -1,0 +1,14 @@
+targets:
+  $default:
+    builders:
+      drift_dev:
+        options:
+          # Fechas como texto ISO-8601: legibles y compatibles con timestamptz.
+          store_date_time_values_as_text: true
+          # toJson() con nombres snake_case, como espera PostgREST.
+          use_sql_column_name_as_json_key: true
+          # Para `dart run drift_dev make-migrations` (HU-004 c3).
+          databases:
+            trazalabor: lib/repositorio/base_datos.dart
+          schema_dir: drift_schemas/
+          test_dir: test/drift/
