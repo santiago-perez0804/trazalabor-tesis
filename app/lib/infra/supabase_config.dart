@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../dominio/perfil.dart';
+import 'administracion_remota.dart';
 import 'almacen_seguro.dart';
 import 'autenticador_remoto.dart';
 
@@ -28,6 +29,12 @@ Future<AutenticadorRemoto> inicializarSupabase(AlmacenClaves almacen) async {
   );
   return AutenticadorSupabase(Supabase.instance.client);
 }
+
+/// Acciones del encargado que resuelve el servidor. Llamar después de
+/// [inicializarSupabase].
+AdministracionRemota crearAdministracion() => ConfigSupabase.configurado
+    ? AdministracionSupabase(Supabase.instance.client)
+    : const AdministracionSinServidor();
 
 /// Se usa cuando la app se compila sin credenciales: se comporta como si
 /// nunca hubiera conexión.

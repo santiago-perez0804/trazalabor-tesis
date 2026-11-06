@@ -11,6 +11,7 @@ import 'package:trazalabor/main.dart';
 import 'package:trazalabor/repositorio/base_datos.dart';
 
 import 'apoyo/autenticador_falso.dart';
+import 'apoyo/desmontar.dart';
 
 void main() {
   late BaseDatos db;
@@ -82,6 +83,7 @@ void main() {
 
     expect(find.text('Mis tareas de hoy'), findsOneWidget);
     expect(find.text('Hola, Juan'), findsOneWidget);
+    await desmontar(tester);
   });
 
   testWidgets('usuario recordado: se saluda y se pide solo el PIN', (tester) async {

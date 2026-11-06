@@ -64,6 +64,11 @@ ThemeData construirTema() {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     ),
+    floatingActionButtonTheme: const FloatingActionButtonThemeData(
+      backgroundColor: ColoresTrazaLabor.verdeCampo,
+      foregroundColor: Colors.white,
+      extendedTextStyle: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+    ),
     inputDecorationTheme: const InputDecorationTheme(
       border: OutlineInputBorder(),
       filled: true,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../comunes/barra_sesion.dart';
 
@@ -10,10 +11,14 @@ class PantallaInicioEncargado extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const secciones = [
-      (Icons.people_alt_outlined, 'Trabajadores'),
-      (Icons.grid_view, 'Unidades productivas'),
-      (Icons.add_task, 'Nueva labor'),
-      (Icons.fact_check_outlined, 'Verificación e historial'),
+      (Icons.add_task, 'Nueva labor', 'Asignar una labor con su lista',
+          '/encargado/labores/nueva'),
+      (Icons.people_alt_outlined, 'Trabajadores', 'Altas, cambios y PIN',
+          '/encargado/trabajadores'),
+      (Icons.grid_view, 'Unidades productivas', 'Lotes, potreros y sus QR',
+          '/encargado/unidades'),
+      (Icons.fact_check_outlined, 'Verificación e historial', 'Próximamente',
+          null),
     ];
     return Scaffold(
       appBar: AppBar(
@@ -25,14 +30,16 @@ class PantallaInicioEncargado extends StatelessWidget {
         children: [
           const EncabezadoSesion(),
           const SizedBox(height: 20),
-          for (final (icono, titulo) in secciones)
+          for (final (icono, titulo, detalle, ruta) in secciones)
             Card(
               child: ListTile(
-                minTileHeight: 64,
+                minTileHeight: 72,
                 leading: Icon(icono, size: 30),
                 title: Text(titulo, style: const TextStyle(fontSize: 18)),
-                subtitle: const Text('Próximamente'),
-                enabled: false,
+                subtitle: Text(detalle, style: const TextStyle(fontSize: 15)),
+                trailing: ruta == null ? null : const Icon(Icons.chevron_right),
+                enabled: ruta != null,
+                onTap: ruta == null ? null : () => context.push(ruta),
               ),
             ),
         ],

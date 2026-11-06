@@ -1,10 +1,15 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../dominio/perfil.dart';
+import '../infra/administracion_remota.dart';
 import '../infra/almacen_seguro.dart';
 import '../infra/autenticador_remoto.dart';
 import '../repositorio/base_datos.dart';
+import '../repositorio/repositorio_bandeja.dart';
+import '../repositorio/repositorio_labores.dart';
 import '../repositorio/repositorio_sesion.dart';
+import '../repositorio/repositorio_trabajadores.dart';
+import '../repositorio/repositorio_unidades.dart';
 
 /// Dependencias que se crean en `main()` y se inyectan con overrides
 /// (en las pruebas se reemplazan por versiones en memoria).
@@ -16,6 +21,11 @@ final autenticadorProvider = Provider<AutenticadorRemoto>(
     (ref) => throw UnimplementedError('Se inyecta desde main()'));
 final perfilRecordadoProvider = Provider<Perfil?>((ref) => null);
 
+/// Sin override (pruebas, app sin credenciales) se comporta como si nunca
+/// hubiera servidor.
+final administracionProvider =
+    Provider<AdministracionRemota>((ref) => const AdministracionSinServidor());
+
 final repositorioSesionProvider = Provider<RepositorioSesion>(
   (ref) => RepositorioSesion(
     remoto: ref.watch(autenticadorProvider),
@@ -23,6 +33,33 @@ final repositorioSesionProvider = Provider<RepositorioSesion>(
     db: ref.watch(baseDatosProvider),
   ),
 );
+
+final repositorioTrabajadoresProvider = Provider<RepositorioTrabajadores>(
+  (ref) => RepositorioTrabajadores(
+      ref.watch(baseDatosProvider), ref.watch(administracionProvider)),
+);
+final repositorioUnidadesProvider = Provider<RepositorioUnidades>(
+    (ref) => RepositorioUnidades(ref.watch(baseDatosProvider)));
+final repositorioLaboresProvider = Provider<RepositorioLabores>(
+    (ref) => RepositorioLabores(ref.watch(baseDatosProvider)));
+final repositorioBandejaProvider = Provider<RepositorioBandeja>(
+    (ref) => RepositorioBandeja(ref.watch(baseDatosProvider)));
+
+// Consultas reactivas sobre la base local (la interfaz siempre lee de SQLite).
+final trabajadoresProvider = StreamProvider<List<Usuario>>(
+    (ref) => ref.watch(repositorioTrabajadoresProvider).observarTrabajadores());
+final trabajadoresAsignablesProvider = StreamProvider<List<Usuario>>(
+    (ref) => ref.watch(repositorioTrabajadoresProvider).observarAsignables());
+final trabajadorProvider = StreamProvider.family<Usuario?, String>(
+    (ref, id) => ref.watch(repositorioTrabajadoresProvider).observar(id));
+final unidadesProvider = StreamProvider<List<UnidadProductiva>>(
+    (ref) => ref.watch(repositorioUnidadesProvider).observarUnidades());
+final unidadesAsignablesProvider = StreamProvider<List<UnidadProductiva>>(
+    (ref) => ref.watch(repositorioUnidadesProvider).observarAsignables());
+final unidadProvider = StreamProvider.family<UnidadProductiva?, String>(
+    (ref, id) => ref.watch(repositorioUnidadesProvider).observar(id));
+final pendientesProvider = StreamProvider<int>(
+    (ref) => ref.watch(repositorioBandejaProvider).observarPendientes());
 
 sealed class EstadoSesion {
   const EstadoSesion();

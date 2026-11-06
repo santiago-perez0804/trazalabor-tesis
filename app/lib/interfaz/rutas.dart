@@ -2,7 +2,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'encargado/formulario_trabajador.dart';
+import 'encargado/formulario_unidad.dart';
 import 'encargado/pantalla_inicio_encargado.dart';
+import 'encargado/pantalla_nueva_labor.dart';
+import 'encargado/pantalla_trabajadores.dart';
+import 'encargado/pantalla_unidades.dart';
 import 'ingreso/pantalla_ingreso.dart';
 import 'proveedores.dart';
 import 'trabajador/pantalla_inicio_trabajador.dart';
@@ -30,8 +35,39 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(path: '/ingreso', builder: (_, _) => const PantallaIngreso()),
       GoRoute(
-          path: '/encargado',
-          builder: (_, _) => const PantallaInicioEncargado()),
+        path: '/encargado',
+        builder: (_, _) => const PantallaInicioEncargado(),
+        routes: [
+          GoRoute(
+            path: 'trabajadores',
+            builder: (_, _) => const PantallaTrabajadores(),
+            routes: [
+              GoRoute(
+                  path: 'nuevo',
+                  builder: (_, _) => const FormularioTrabajador()),
+              GoRoute(
+                  path: ':id',
+                  builder: (_, estado) =>
+                      FormularioTrabajador(id: estado.pathParameters['id'])),
+            ],
+          ),
+          GoRoute(
+            path: 'unidades',
+            builder: (_, _) => const PantallaUnidades(),
+            routes: [
+              GoRoute(
+                  path: 'nueva', builder: (_, _) => const FormularioUnidad()),
+              GoRoute(
+                  path: ':id',
+                  builder: (_, estado) =>
+                      FormularioUnidad(id: estado.pathParameters['id'])),
+            ],
+          ),
+          GoRoute(
+              path: 'labores/nueva',
+              builder: (_, _) => const PantallaNuevaLabor()),
+        ],
+      ),
       GoRoute(
           path: '/trabajador',
           builder: (_, _) => const PantallaInicioTrabajador()),

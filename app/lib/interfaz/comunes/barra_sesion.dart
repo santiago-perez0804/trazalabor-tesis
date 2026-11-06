@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../proveedores.dart';
 import '../tema.dart';
+import 'contador_pendientes.dart';
 import 'indicador_conexion.dart';
 
 /// Encabezado común de las pantallas con sesión: saludo, estado de conexión y,
@@ -27,6 +28,8 @@ class EncabezadoSesion extends ConsumerWidget {
             const IndicadorConexion(),
           ],
         ),
+        const SizedBox(height: 8),
+        const ContadorPendientes(),
         if (sesion.sinConexion)
           Container(
             margin: const EdgeInsets.only(top: 12),

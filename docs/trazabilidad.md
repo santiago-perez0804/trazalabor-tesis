@@ -7,10 +7,10 @@ pruebas que la verifican.
 | HU | Estado | Archivos principales | Pruebas |
 |---|---|---|---|
 | HU-001 | Hecho | `app/lib/dominio/pin.dart`, `control_intentos.dart`, `perfil.dart`; `app/lib/repositorio/repositorio_sesion.dart`; `app/lib/infra/hash_pin.dart`, `autenticador_remoto.dart`, `almacen_seguro.dart`; `app/lib/interfaz/ingreso/`, `rutas.dart`; `supabase/migrations/20261105165317_permisos_por_rol.sql` | `app/test/dominio/pin_test.dart` (c2), `app/test/repositorio/repositorio_sesion_test.dart` (c1, c2, c3), `app/test/widget_test.dart`; en el emulador: ingreso por rol, sin conexión y bloqueo |
-| HU-002 | Parcial: c3 y c4 hechos; c1 y c2 (pantallas del encargado) pendientes | Activación: RPC `estado_cuenta` + trigger `vincular_cuenta_auth`; desactivación: `usuario.activo` + `usuario_actual()` en las políticas RLS; restablecer PIN: `supabase/functions/restablecer-pin/` | `app/test/repositorio/repositorio_sesion_test.dart`; `supabase/scripts/verificacion_rls.sql` (10/10 OK en la nube) |
-| HU-003 | Pendiente | | |
+| HU-002 | Hecho | `app/lib/repositorio/repositorio_trabajadores.dart`; `app/lib/interfaz/encargado/pantalla_trabajadores.dart`, `formulario_trabajador.dart`; activación: RPC `estado_cuenta` + trigger `vincular_cuenta_auth`; desactivación: `usuario.activo` + `usuario_actual()` en las políticas RLS; restablecer PIN: `supabase/functions/restablecer-pin/` y `app/lib/infra/administracion_remota.dart` | `app/test/repositorio/repositorios_encargado_test.dart` (c1, c2, c4), `app/test/encargado_test.dart` (c2), `app/test/repositorio/repositorio_sesion_test.dart` (c3, c4); `supabase/scripts/verificacion_rls.sql` (10/10 OK en la nube) |
+| HU-003 | Hecho | `app/lib/repositorio/repositorio_unidades.dart`; `app/lib/infra/exportar_qr.dart`; `app/lib/interfaz/encargado/pantalla_unidades.dart`, `formulario_unidad.dart` | `app/test/repositorio/repositorios_encargado_test.dart` (c1, c3); en el emulador: exportación de la imagen para imprimir (c2) |
 | HU-004 | Hecho (c1 y c2); c3 se verifica con la primera versión 2 del esquema | `app/lib/repositorio/tablas.dart`, `base_datos.dart`, `registrar_accion.dart`; `supabase/migrations/20261103220721_esquema.sql` | `app/test/repositorio/registrar_accion_test.dart`; `supabase/scripts/verificacion_nube.sql`; `supabase/tests/esquema.test.sql`; esquema v1 en `app/drift_schemas/` |
-| HU-005 | Pendiente | | |
+| HU-005 | Hecho | `app/lib/dominio/plantillas_labor.dart`, `validar_labor.dart`, `catalogos.dart`; `app/lib/repositorio/repositorio_labores.dart`; `app/lib/interfaz/encargado/pantalla_nueva_labor.dart`, `editor_checklist.dart` | `app/test/dominio/validar_labor_test.dart` (c2, c3), `app/test/repositorio/repositorios_encargado_test.dart` (c1, c3), `app/test/encargado_test.dart` (c2, c3); en el emulador: labor asignada en modo avión |
 | HU-006 | Pendiente | | |
 | HU-007 | Pendiente | | |
 | HU-008 | Pendiente | | |
@@ -30,8 +30,13 @@ pruebas que la verifican.
 | T-05 | Hecho | Pantalla de ingreso con teléfono y teclado de PIN propio (teclas de 64 dp); recuerda al último usuario del teléfono. |
 | T-06 | Hecho | PBKDF2-HMAC-SHA256 con salt, 50 000 iteraciones, fuera del hilo de la interfaz (~0,3 s en PC; a confirmar en el celular). |
 | T-07 | Hecho | Sesión de Supabase en `flutter_secure_storage`; sin conexión se valida el PIN contra el hash local y se opera igual. |
+| T-08 | Hecho | Alta, modificación y desactivación de trabajadores desde la vista del encargado; restablecer PIN con conexión. |
 | T-09 | Hecho | El trabajador preregistrado elige su PIN en el primer ingreso y su cuenta queda activada. |
-| T-12 | Hecho | Pruebas de dominio, repositorio, transacción de la bandeja, hash del PIN y sesión (49 en total). |
+| T-10 | Hecho | Alta, modificación y desactivación (baja lógica) de unidades productivas. |
+| T-11 | Hecho | Código QR único por unidad; imagen PNG de 1200 px con el nombre de la unidad, lista para imprimir o compartir. |
+| T-12 | Hecho | Pruebas de dominio, repositorio, transacción de la bandeja, hash del PIN y sesión. |
+| T-13 | Hecho | Pantalla "Nueva labor" (pantalla A): unidad y trabajador activos, tipo de labor, fecha, indicaciones, evidencia requerida y verificación QR. |
+| T-14 | Hecho | Editor de la lista de verificación (agregar, quitar, tipo de respuesta, obligatorio) y plantillas por tipo de labor. |
 
 ## Decisiones de implementación no especificadas en la tesis
 | # | Tema | Qué dice la tesis | Qué se implementa | Motivo |
@@ -53,3 +58,7 @@ pruebas que la verifican.
 | D15 | Eventos tras una reasignación | El trabajador "registra eventos sobre" sus labores | Puede registrar eventos de ejecución si es el asignado actual o si ya había registrado eventos en esa tarea (`participa_en_tarea`) | Si ejecutó sin señal mientras se la reasignaban, la bitácora debe reflejar lo que pasó en el campo y la bandeja no debe trabarse. |
 | D16 | Consulta previa al ingreso | — | RPC `estado_cuenta(telefono)` accesible sin sesión | Decide si el usuario crea o ingresa su PIN. Revela si un número está dado de alta; se acepta en un prototipo de un solo establecimiento. |
 | D17 | Desactivación y acceso sin conexión | "El acceso se rechaza" (HU-002 c4) | Al detectar con conexión que la cuenta fue desactivada, se borra el hash local del PIN | Sin esto, un trabajador desactivado podría seguir ingresando sin señal en ese teléfono. Mientras no haya conexión, el teléfono no puede enterarse de la desactivación. |
+| D18 | Contenido del código QR | "Texto único codificado en el QR del punto físico" | `TRAZALABOR:UP:<id de la unidad>` | Se genera sin conexión y sin riesgo de repetirse; el prefijo permite reconocer al escanear que el código es de una unidad de TrazaLabor. El código no cambia al editar la unidad, así los carteles impresos siguen sirviendo. |
+| D19 | Plantillas de labor | Solo fija los ítems obligatorios de la aplicación fitosanitaria (producto, dosis, lote y condiciones meteorológicas) | Esos cuatro ítems son fijos (no se pueden quitar ni volver opcionales). Los demás tipos traen ítems sugeridos y editables, además de la evidencia y el QR sugeridos | Agiliza la carga sin imponer requisitos que la tesis no define. |
+| D20 | Administración sin conexión | — | Altas, cambios y desactivaciones se guardan en el teléfono y se envían con la sincronización; restablecer el PIN requiere conexión | Restablecer el PIN es una acción del servidor (Edge Function con clave de servicio) y no puede quedar pendiente. |
+| D21 | Indicador de pendientes | "Indicador permanente del estado de conexión y de sincronización" | Contador de operaciones de la bandeja todavía no confirmadas, junto al indicador de conexión en todas las pantallas con sesión | Hace visible que lo registrado quedó guardado y aún no llegó al servidor. |

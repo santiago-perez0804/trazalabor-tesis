@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
@@ -27,6 +28,7 @@ Future<void> main() async {
     overrides: [
       almacenProvider.overrideWithValue(almacen),
       autenticadorProvider.overrideWithValue(autenticador),
+      administracionProvider.overrideWithValue(crearAdministracion()),
       baseDatosProvider.overrideWithValue(db),
       perfilRecordadoProvider.overrideWithValue(recordado),
     ],
@@ -43,6 +45,10 @@ class TrazaLaborApp extends ConsumerWidget {
       title: 'TrazaLabor',
       debugShowCheckedModeBanner: false,
       theme: construirTema(),
+      // Textos del sistema (calendario, diálogos) en español rioplatense.
+      locale: const Locale('es', 'AR'),
+      supportedLocales: const [Locale('es', 'AR'), Locale('es')],
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
       routerConfig: ref.watch(routerProvider),
     );
   }
