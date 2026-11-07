@@ -11,10 +11,10 @@ pruebas que la verifican.
 | HU-003 | Hecho | `app/lib/repositorio/repositorio_unidades.dart`; `app/lib/infra/exportar_qr.dart`; `app/lib/interfaz/encargado/pantalla_unidades.dart`, `formulario_unidad.dart` | `app/test/repositorio/repositorios_encargado_test.dart` (c1, c3); en el emulador: exportación de la imagen para imprimir (c2) |
 | HU-004 | Hecho (c1 y c2); c3 se verifica con la primera versión 2 del esquema | `app/lib/repositorio/tablas.dart`, `base_datos.dart`, `registrar_accion.dart`; `supabase/migrations/20261103220721_esquema.sql` | `app/test/repositorio/registrar_accion_test.dart`; `supabase/scripts/verificacion_nube.sql`; `supabase/tests/esquema.test.sql`; esquema v1 en `app/drift_schemas/` |
 | HU-005 | Hecho | `app/lib/dominio/plantillas_labor.dart`, `validar_labor.dart`, `catalogos.dart`; `app/lib/repositorio/repositorio_labores.dart`; `app/lib/interfaz/encargado/pantalla_nueva_labor.dart`, `editor_checklist.dart` | `app/test/dominio/validar_labor_test.dart` (c2, c3), `app/test/repositorio/repositorios_encargado_test.dart` (c1, c3), `app/test/encargado_test.dart` (c2, c3); en el emulador: labor asignada en modo avión |
-| HU-006 | Pendiente | | |
-| HU-007 | Pendiente | | |
-| HU-008 | Pendiente | | |
-| HU-009 | Pendiente | | |
+| HU-006 | Hecho | `app/lib/repositorio/repositorio_ejecucion.dart` (`observarTareasDelDia`, `observarDetalle`); `app/lib/dominio/estado_bandeja.dart`; `app/lib/interfaz/trabajador/pantalla_inicio_trabajador.dart` | `app/test/repositorio/repositorio_ejecucion_test.dart` (c1, c2), `app/test/trabajador_test.dart` (c1, c2); en el emulador, en modo avión |
+| HU-007 | Hecho | `app/lib/repositorio/repositorio_ejecucion.dart` (`iniciar`, `completarItem`, `cerrarCompletada`, `cerrarNoCompletada`); `app/lib/dominio/valor_item.dart`, `validar_cierre.dart`; `app/lib/interfaz/trabajador/pantalla_ejecucion.dart`, `pantalla_cierre.dart` | `app/test/repositorio/repositorio_ejecucion_test.dart` (c1, c2, c3), `app/test/trabajador_test.dart` (c1); en el emulador: lista completa, cierre bloqueado por faltantes y cierre como no completada sin conexión |
+| HU-008 | Hecho | `app/lib/infra/captura_evidencia.dart`; `app/lib/dominio/archivo_evidencia.dart`; `registrarAccion()` con `subidas`; `app/lib/interfaz/trabajador/pantalla_cierre.dart` | `app/test/repositorio/repositorio_ejecucion_test.dart` (c1, c3); en el emulador: foto de 63 KB con huella verificada contra el archivo, audio de 41 KB reproducible antes del cierre (c2) |
+| HU-009 | Hecho | `app/lib/dominio/validar_qr.dart`; `RepositorioEjecucion.verificarQr`; `app/lib/interfaz/trabajador/escaner_qr.dart` | `app/test/dominio/ejecucion_dominio_test.dart` (c2), `app/test/repositorio/repositorio_ejecucion_test.dart` (c1, c2, c3); lectura con cámara a confirmar en el celular |
 | HU-010 | Pendiente | | |
 | HU-011 | Pendiente | | |
 | HU-012 | Pendiente | | |
@@ -37,6 +37,13 @@ pruebas que la verifican.
 | T-12 | Hecho | Pruebas de dominio, repositorio, transacción de la bandeja, hash del PIN y sesión. |
 | T-13 | Hecho | Pantalla "Nueva labor" (pantalla A): unidad y trabajador activos, tipo de labor, fecha, indicaciones, evidencia requerida y verificación QR. |
 | T-14 | Hecho | Editor de la lista de verificación (agregar, quitar, tipo de respuesta, obligatorio) y plantillas por tipo de labor. |
+| T-15 | Hecho | Bandeja "Mis tareas de hoy" (pantalla B) con consultas reactivas sobre la base local. |
+| T-16 | Hecho | Ejecución de la lista de verificación con los eventos INICIADA e ITEM_COMPLETADO. |
+| T-17 | Hecho | Cierre como COMPLETADA o NO_COMPLETADA, con la validación de ítems obligatorios, evidencia y QR. |
+| T-18 | Hecho | Foto con la cámara comprimida a JPEG (lado mayor ~1280 px, calidad 70); audio AAC mono a 32 kbps. |
+| T-19 | Hecho | Huella SHA-256 de cada archivo, calculada fuera del hilo de la interfaz; cola de multimedia como operaciones SUBIDA. |
+| T-20 | Hecho | Escaneo con la cámara y validación local contra el código de la unidad asignada. |
+| T-22 | Parcial | Pruebas unitarias y de interfaz de HU-005 a HU-009; faltan las de HU-010. |
 
 ## Decisiones de implementación no especificadas en la tesis
 | # | Tema | Qué dice la tesis | Qué se implementa | Motivo |
@@ -62,3 +69,8 @@ pruebas que la verifican.
 | D19 | Plantillas de labor | Solo fija los ítems obligatorios de la aplicación fitosanitaria (producto, dosis, lote y condiciones meteorológicas) | Esos cuatro ítems son fijos (no se pueden quitar ni volver opcionales). Los demás tipos traen ítems sugeridos y editables, además de la evidencia y el QR sugeridos | Agiliza la carga sin imponer requisitos que la tesis no define. |
 | D20 | Administración sin conexión | — | Altas, cambios y desactivaciones se guardan en el teléfono y se envían con la sincronización; restablecer el PIN requiere conexión | Restablecer el PIN es una acción del servidor (Edge Function con clave de servicio) y no puede quedar pendiente. |
 | D21 | Indicador de pendientes | "Indicador permanente del estado de conexión y de sincronización" | Contador de operaciones de la bandeja todavía no confirmadas, junto al indicador de conexión en todas las pantallas con sesión | Hace visible que lo registrado quedó guardado y aún no llegó al servidor. |
+| D22 | Inicio de la labor | El trabajador inicia la labor y marca ítems (HU-007 c1) | Botón "Iniciar labor"; si marca un ítem, adjunta evidencia o escanea el QR sin haber iniciado, se registra INICIADA en la misma transacción | Evita un paso obligatorio y garantiza que la bitácora siempre tenga el inicio antes de la ejecución. |
+| D23 | Contenido de "Mis tareas de hoy" | Labores asignadas para el día | Las del día, más las de días anteriores que siguen abiertas o que todavía tienen operaciones sin enviar | Una labor atrasada no debe desaparecer, y una cerrada sin conexión debe seguir figurando como pendiente de envío (HU-007 c3). |
+| D24 | Contenido de los eventos de ejecución | "Datos propios del evento" | ITEM_COMPLETADO `{item_id, valor}`; QR_VERIFICADO `{codigo_qr}`; EVIDENCIA_ADJUNTA `{evidencia_id, tipo}`; NO_COMPLETADA `{motivo}` o `{motivo_audio_id}` | Permite reconstruir la ejecución completa a partir de la bitácora. Los números se guardan con punto decimal y se muestran con coma. Corregir un valor registra un evento nuevo. |
+| D25 | Formato y ubicación de la evidencia | Fotos y audios comprimidos | JPEG de ~1280 px con calidad 70 y AAC mono a 32 kbps, guardados en `evidencias/<tarea_id>/<evidencia_id>` dentro de la app; en el servidor, `<tarea_id>/<evidencia_id>.<ext>` en el bucket `evidencias` | Archivos livianos para enviar con poca señal. La ruta remota se fija al crear la evidencia porque la tabla no admite modificaciones (D5). |
+| D26 | Posición en los eventos | Latitud y longitud "si está disponible" | Por ahora se registran vacías | Pedir la ubicación en cada acción agrega demoras y permisos sin ser requisito de ninguna historia; las columnas quedan listas para usarlas. |

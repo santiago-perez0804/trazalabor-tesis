@@ -2,13 +2,11 @@ import 'package:drift/drift.dart';
 
 import '../dominio/catalogos.dart';
 import '../dominio/validar_altas.dart';
+import '../dominio/validar_qr.dart';
 import 'base_datos.dart';
 import 'fabrica_eventos.dart';
 import 'registrar_accion.dart';
 import 'repositorio_trabajadores.dart' show DatosRechazados;
-
-/// Prefijo del texto codificado en el QR de cada unidad (decisión D18).
-const prefijoQr = 'TRAZALABOR:UP:';
 
 /// Alta, modificación y desactivación de unidades productivas (HU-003, T-10).
 class RepositorioUnidades {

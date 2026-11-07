@@ -10,6 +10,8 @@ import 'encargado/pantalla_trabajadores.dart';
 import 'encargado/pantalla_unidades.dart';
 import 'ingreso/pantalla_ingreso.dart';
 import 'proveedores.dart';
+import 'trabajador/pantalla_cierre.dart';
+import 'trabajador/pantalla_ejecucion.dart';
 import 'trabajador/pantalla_inicio_trabajador.dart';
 
 /// Navegación por rol: cada perfil solo llega a sus pantallas
@@ -69,8 +71,22 @@ final routerProvider = Provider<GoRouter>((ref) {
         ],
       ),
       GoRoute(
-          path: '/trabajador',
-          builder: (_, _) => const PantallaInicioTrabajador()),
+        path: '/trabajador',
+        builder: (_, _) => const PantallaInicioTrabajador(),
+        routes: [
+          GoRoute(
+            path: 'tarea/:id',
+            builder: (_, estado) =>
+                PantallaEjecucion(tareaId: estado.pathParameters['id']!),
+            routes: [
+              GoRoute(
+                  path: 'cierre',
+                  builder: (_, estado) =>
+                      PantallaCierre(tareaId: estado.pathParameters['id']!)),
+            ],
+          ),
+        ],
+      ),
     ],
   );
 });

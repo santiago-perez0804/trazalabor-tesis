@@ -29,12 +29,38 @@ class CambioEntidad<T extends Table, D extends DataClass> {
   final TipoOperacion operacion;
 }
 
-/// Una acción de negocio: entidades que cambian + eventos de la bitácora.
+/// Archivo de evidencia para la cola de multimedia (decisión D4): se encola
+/// como `operacion = 'SUBIDA'` y se procesa aparte de los eventos (HU-011 c3).
+class SubidaArchivo {
+  const SubidaArchivo({
+    required this.evidenciaId,
+    required this.rutaLocal,
+    required this.rutaRemota,
+    required this.tipoContenido,
+    required this.hashSha256,
+  });
+
+  final String evidenciaId;
+  final String rutaLocal;
+
+  /// Ruta en el bucket `evidencias`: `<tarea_id>/<evidencia_id>.<ext>`.
+  final String rutaRemota;
+  final String tipoContenido;
+  final String hashSha256;
+}
+
+/// Una acción de negocio: entidades que cambian + eventos de la bitácora
+/// + archivos a subir.
 class Accion {
-  const Accion({this.cambios = const [], this.eventos = const []});
+  const Accion({
+    this.cambios = const [],
+    this.eventos = const [],
+    this.subidas = const [],
+  });
 
   final List<CambioEntidad> cambios;
   final List<Evento> eventos;
+  final List<SubidaArchivo> subidas;
 }
 
 /// Columnas que nunca viajan al servidor: las fija el servidor
@@ -73,6 +99,24 @@ extension RegistrarAccion on BaseDatos {
           payload: evento.toJson(serializer: _serializador),
           operacion: TipoOperacion.insert.valor,
           ahora: ahora,
+        );
+      }
+
+      for (final subida in accion.subidas) {
+        await into(operacionesPendientes).insert(
+          OperacionesPendientesCompanion.insert(
+            id: nuevoId(),
+            entidad: evidencias.actualTableName,
+            entidadId: subida.evidenciaId,
+            operacion: 'SUBIDA',
+            payload: {
+              'ruta_local': subida.rutaLocal,
+              'ruta_remota': subida.rutaRemota,
+              'tipo_contenido': subida.tipoContenido,
+              'hash_sha256': subida.hashSha256,
+            },
+            createdAtDevice: ahora,
+          ),
         );
       }
 

@@ -6,6 +6,7 @@ import '../infra/almacen_seguro.dart';
 import '../infra/autenticador_remoto.dart';
 import '../repositorio/base_datos.dart';
 import '../repositorio/repositorio_bandeja.dart';
+import '../repositorio/repositorio_ejecucion.dart';
 import '../repositorio/repositorio_labores.dart';
 import '../repositorio/repositorio_sesion.dart';
 import '../repositorio/repositorio_trabajadores.dart';
@@ -60,6 +61,21 @@ final unidadProvider = StreamProvider.family<UnidadProductiva?, String>(
     (ref, id) => ref.watch(repositorioUnidadesProvider).observar(id));
 final pendientesProvider = StreamProvider<int>(
     (ref) => ref.watch(repositorioBandejaProvider).observarPendientes());
+
+final repositorioEjecucionProvider = Provider<RepositorioEjecucion>(
+    (ref) => RepositorioEjecucion(ref.watch(baseDatosProvider)));
+
+/// "Mis tareas de hoy" del usuario con sesión (pantalla B).
+final tareasDelDiaProvider = StreamProvider<List<TareaBandeja>>((ref) {
+  final sesion = ref.watch(sesionProvider);
+  if (sesion is! ConSesion) return Stream.value(const []);
+  return ref
+      .watch(repositorioEjecucionProvider)
+      .observarTareasDelDia(sesion.perfil.id, DateTime.now());
+});
+
+final detalleTareaProvider = StreamProvider.family<DetalleTarea?, String>(
+    (ref, id) => ref.watch(repositorioEjecucionProvider).observarDetalle(id));
 
 sealed class EstadoSesion {
   const EstadoSesion();

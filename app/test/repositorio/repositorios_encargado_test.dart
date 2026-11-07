@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:trazalabor/dominio/catalogos.dart';
 import 'package:trazalabor/dominio/plantillas_labor.dart';
 import 'package:trazalabor/dominio/validar_labor.dart';
+import 'package:trazalabor/dominio/validar_qr.dart';
 import 'package:trazalabor/repositorio/base_datos.dart';
 import 'package:trazalabor/repositorio/repositorio_bandeja.dart';
 import 'package:trazalabor/repositorio/repositorio_labores.dart';
