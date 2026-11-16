@@ -1,16 +1,16 @@
 import 'tipo_evento.dart';
 
-/// Cómo se muestra una labor en "Mis tareas de hoy" (pantalla B de la
-/// Figura 5): Pendiente / En curso / Completada · sincronizada /
-/// Completada · por enviar.
+/// Cómo se muestra una labor en "Tareas de hoy" (pantalla B de la
+/// Figura 5), con palabras llanas: Por hacer / Empezada / Terminada ·
+/// enviada / Terminada · se envía con señal.
 enum EstadoBandeja {
-  pendiente('Pendiente'),
-  enCurso('En curso'),
-  completadaSincronizada('Completada · sincronizada'),
-  completadaPorEnviar('Completada · por enviar'),
-  noCompletadaSincronizada('No completada · sincronizada'),
-  noCompletadaPorEnviar('No completada · por enviar'),
-  verificada('Verificada');
+  pendiente('Por hacer · tocá para empezar'),
+  enCurso('Empezada'),
+  completadaSincronizada('Terminada · enviada'),
+  completadaPorEnviar('Terminada · se envía con señal'),
+  noCompletadaSincronizada('No terminada · enviada'),
+  noCompletadaPorEnviar('No terminada · se envía con señal'),
+  verificada('Revisada por el encargado');
 
   const EstadoBandeja(this.etiqueta);
   final String etiqueta;

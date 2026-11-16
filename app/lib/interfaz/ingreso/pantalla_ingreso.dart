@@ -4,16 +4,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../dominio/perfil.dart';
 import '../../dominio/pin.dart';
 import '../../repositorio/repositorio_sesion.dart';
-import '../comunes/indicador_conexion.dart';
+import '../comunes/barra_app.dart';
 import '../comunes/teclado_pin.dart';
 import '../proveedores.dart';
 import '../tema.dart';
 
-enum _Paso { telefono, ingresarPin, crearPin, repetirPin }
-
-/// Inicio de sesión con teléfono y PIN (HU-001) y activación de la cuenta del
-/// trabajador preregistrado (HU-002 c3), en pocos pasos y sin teclado del sistema
-/// para el PIN.
+/// Ingreso (pantalla F de la Figura 5): teléfono y PIN en una sola pantalla
+/// (HU-001). Si es el primer ingreso de un trabajador preregistrado, el PIN
+/// escrito es el que elige y se pide repetirlo para activar la cuenta
+/// (HU-002 c3).
 class PantallaIngreso extends ConsumerStatefulWidget {
   const PantallaIngreso({super.key});
 
@@ -23,10 +22,15 @@ class PantallaIngreso extends ConsumerStatefulWidget {
 
 class _PantallaIngresoState extends ConsumerState<PantallaIngreso> {
   final _telefono = TextEditingController();
-  var _paso = _Paso.telefono;
+  String _pin = '';
   String? _mensaje;
   var _cargando = false;
+
+  /// PIN elegido en el primer ingreso, a la espera de que se repita.
   String? _pinNuevo;
+
+  /// Cambia para vaciar el teclado después de un error.
+  var _reinicio = 0;
   Perfil? _recordado;
 
   @override
@@ -36,7 +40,6 @@ class _PantallaIngresoState extends ConsumerState<PantallaIngreso> {
     if (sesion is SinSesion && sesion.recordado != null) {
       _recordado = sesion.recordado;
       _telefono.text = _recordado!.telefono;
-      _paso = _Paso.ingresarPin;
     }
   }
 
@@ -48,58 +51,71 @@ class _PantallaIngresoState extends ConsumerState<PantallaIngreso> {
 
   RepositorioSesion get _repo => ref.read(repositorioSesionProvider);
 
-  void _mostrar(String? mensaje, {bool cargando = false}) => setState(() {
-        _cargando = cargando;
-        _mensaje = mensaje;
-      });
+  void _mostrar(
+    String? mensaje, {
+    bool cargando = false,
+    bool limpiar = false,
+  }) => setState(() {
+    _cargando = cargando;
+    _mensaje = mensaje;
+    if (limpiar) {
+      _pin = '';
+      _reinicio++;
+    }
+  });
 
-  Future<void> _continuar() async {
+  Future<void> _ingresar() async {
     final error = validarTelefono(_telefono.text);
     if (error != null) return _mostrar(error);
+    if (_pin.length != longitudPin) {
+      return _mostrar('Escribí los 6 números de tu PIN.');
+    }
+    FocusScope.of(context).unfocus();
+    final pin = _pin;
 
     _mostrar(null, cargando: true);
     final paso = await _repo.pasoSiguiente(_telefono.text);
     if (!mounted) return;
-    setState(() {
-      _cargando = false;
-      switch (paso) {
-        case PasoSiguiente.crearPin:
-          _paso = _Paso.crearPin;
-        case PasoSiguiente.ingresarPin:
-          _paso = _Paso.ingresarPin;
-        case PasoSiguiente.desactivado:
-          _mensaje = 'Tu cuenta está desactivada. Hablá con el encargado.';
-        case PasoSiguiente.noDadoDeAlta:
-          _mensaje =
-              'Este número no está dado de alta. Pedile al encargado que te agregue.';
-        case PasoSiguiente.necesitaConexion:
-          _mensaje = 'Sin conexión. El primer ingreso en este teléfono necesita señal.';
-      }
-    });
-  }
-
-  Future<void> _ingresar(String pin) async {
-    _mostrar(null, cargando: true);
-    _resolver(await _repo.ingresar(_telefono.text, pin));
-  }
-
-  void _elegirPin(String pin) {
-    final error = validarPinNuevo(pin);
-    setState(() {
-      _mensaje = error;
-      if (error == null) {
-        _pinNuevo = pin;
-        _paso = _Paso.repetirPin;
-      }
-    });
+    switch (paso) {
+      case PasoSiguiente.ingresarPin:
+        _resolver(await _repo.ingresar(_telefono.text, pin));
+      case PasoSiguiente.crearPin:
+        // Primer ingreso: el PIN escrito es el que elige.
+        final motivo = validarPinNuevo(pin);
+        if (motivo != null) {
+          return _mostrar(
+            'Es tu primer ingreso: elegí tu PIN. $motivo',
+            limpiar: true,
+          );
+        }
+        setState(() {
+          _cargando = false;
+          _mensaje = null;
+          _pinNuevo = pin;
+        });
+      case PasoSiguiente.desactivado:
+        _mostrar(
+          'Tu cuenta está desactivada. Hablá con el encargado.',
+          limpiar: true,
+        );
+      case PasoSiguiente.noDadoDeAlta:
+        _mostrar(
+          'Este número no está dado de alta. Pedile al encargado que te '
+          'agregue.',
+          limpiar: true,
+        );
+      case PasoSiguiente.necesitaConexion:
+        _mostrar(
+          'Sin señal. El primer ingreso en este teléfono necesita señal.',
+          limpiar: true,
+        );
+    }
   }
 
   Future<void> _repetirPin(String pin) async {
     if (pin != _pinNuevo) {
-      return setState(() {
-        _mensaje = 'Los PIN no coinciden. Elegilo de nuevo.';
-        _paso = _Paso.crearPin;
-      });
+      setState(() => _pinNuevo = null);
+      return _mostrar('Los PIN no coinciden. Elegilo de nuevo.', limpiar: true);
     }
     _mostrar(null, cargando: true);
     _resolver(await _repo.activar(_telefono.text, pin));
@@ -111,13 +127,20 @@ class _PantallaIngresoState extends ConsumerState<PantallaIngreso> {
       case IngresoCorrecto():
         ref.read(sesionProvider.notifier).ingresado(r);
       case IngresoRechazado(:final mensaje):
-        _mostrar(mensaje);
+        _pinNuevo = null;
+        _mostrar(mensaje, limpiar: true);
       case IngresoBloqueado(:final minutos):
-        _mostrar('Ingresaste mal el PIN 5 veces. Esperá $minutos '
-            '${minutos == 1 ? 'minuto' : 'minutos'} y probá de nuevo.');
+        _mostrar(
+          'Ingresaste mal el PIN 5 veces. Esperá $minutos '
+          '${minutos == 1 ? 'minuto' : 'minutos'} y probá de nuevo.',
+          limpiar: true,
+        );
       case IngresoPinRestablecido():
-        _paso = _Paso.crearPin;
-        _mostrar('El encargado restableció tu PIN. Elegí uno nuevo.');
+        _mostrar(
+          'El encargado restableció tu PIN. Elegí uno nuevo y tocá '
+          '"Ingresar".',
+          limpiar: true,
+        );
     }
   }
 
@@ -126,78 +149,98 @@ class _PantallaIngresoState extends ConsumerState<PantallaIngreso> {
     setState(() {
       _recordado = null;
       _telefono.clear();
-      _paso = _Paso.telefono;
+      _pinNuevo = null;
       _mensaje = null;
+      _pin = '';
+      _reinicio++;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final (titulo, ayuda) = switch (_paso) {
-      _Paso.telefono => ('Ingresá tu número de teléfono', 'Con código de área, sin 0 ni 15.'),
-      _Paso.ingresarPin => (
-          _recordado != null ? 'Hola, ${_recordado!.nombreCorto}' : 'Ingresá tu PIN',
-          'Número ${_telefono.text}'
-        ),
-      _Paso.crearPin => (
-          'Elegí tu PIN de 6 números',
-          'Es tu primer ingreso. No uses el mismo número repetido ni números seguidos.'
-        ),
-      _Paso.repetirPin => ('Repetí tu PIN', 'Para confirmar que lo escribiste bien.'),
-    };
-
+    final repitiendo = _pinNuevo != null;
     return Scaffold(
-      appBar: AppBar(title: const Text('TrazaLabor')),
+      appBar: const BarraApp(
+        titulo: 'Labores del campo',
+        subtitulo: 'Ingresá con tu teléfono y tu PIN',
+      ),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
           children: [
-            const Align(alignment: Alignment.centerRight, child: IndicadorConexion()),
-            const SizedBox(height: 16),
-            Text(titulo,
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 6),
-            Text(ayuda,
-                style: const TextStyle(
-                    fontSize: 16, color: ColoresTrazaLabor.textoSecundario)),
-            const SizedBox(height: 24),
-            if (_paso == _Paso.telefono) ...[
-              TextField(
-                key: const ValueKey('campo-telefono'),
-                controller: _telefono,
-                keyboardType: TextInputType.phone,
-                autofocus: true,
-                style: const TextStyle(fontSize: 24, letterSpacing: 1.5),
-                decoration: const InputDecoration(
-                  labelText: 'Teléfono',
-                  hintText: '351 555 1234',
-                  prefixIcon: Icon(Icons.phone_android),
+            if (repitiendo) ...[
+              const Text(
+                'Repetí tu PIN',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Es tu primer ingreso: escribilo otra vez para confirmarlo.',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: ColoresTrazaLabor.textoSecundario,
                 ),
-                onSubmitted: (_) => _continuar(),
               ),
               const SizedBox(height: 20),
-              FilledButton(
-                onPressed: _cargando ? null : _continuar,
-                child: const Text('Continuar'),
-              ),
-            ] else
               TecladoPin(
-                key: ValueKey(_paso),
+                key: const ValueKey('teclado-repetir'),
                 habilitado: !_cargando,
-                onCompleto: switch (_paso) {
-                  _Paso.ingresarPin => _ingresar,
-                  _Paso.crearPin => _elegirPin,
-                  _ => _repetirPin,
-                },
+                onCompleto: _repetirPin,
               ),
+            ] else ...[
+              if (_recordado != null)
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Hola, ${_recordado!.nombreCorto}',
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: _cargando ? null : _otroNumero,
+                      style: TextButton.styleFrom(
+                        minimumSize: const Size(48, 48),
+                      ),
+                      child: Text('No soy ${_recordado!.nombreCorto}'),
+                    ),
+                  ],
+                )
+              else ...[
+                const _Rotulo('Tu número de teléfono'),
+                TextField(
+                  key: const ValueKey('campo-telefono'),
+                  controller: _telefono,
+                  keyboardType: TextInputType.phone,
+                  style: const TextStyle(fontSize: 22, letterSpacing: 1.2),
+                  decoration: const InputDecoration(
+                    hintText: '351 555 1234',
+                    helperText: 'Con código de área, sin 0 ni 15.',
+                  ),
+                  onTapOutside: (_) => FocusScope.of(context).unfocus(),
+                ),
+              ],
+              const SizedBox(height: 18),
+              const _Rotulo('Tu PIN de 6 números'),
+              const SizedBox(height: 6),
+              TecladoPin(
+                key: ValueKey('teclado-$_reinicio'),
+                habilitado: !_cargando,
+                enviarAlCompletar: false,
+                onCambio: (pin) => setState(() => _pin = pin),
+              ),
+            ],
             if (_cargando)
               const Padding(
-                padding: EdgeInsets.only(top: 20),
+                padding: EdgeInsets.only(top: 16),
                 child: Center(child: CircularProgressIndicator()),
               ),
             if (_mensaje != null)
               Padding(
-                padding: const EdgeInsets.only(top: 20),
+                padding: const EdgeInsets.only(top: 16),
                 child: Container(
                   key: const ValueKey('mensaje-ingreso'),
                   padding: const EdgeInsets.all(14),
@@ -205,25 +248,61 @@ class _PantallaIngresoState extends ConsumerState<PantallaIngreso> {
                     color: const Color(0xFFFBEAEA),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Text(_mensaje!,
-                      style: const TextStyle(
-                          fontSize: 16, color: ColoresTrazaLabor.sinConexion)),
+                  child: Text(
+                    _mensaje!,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: ColoresTrazaLabor.sinConexion,
+                    ),
+                  ),
                 ),
               ),
-            if (_paso != _Paso.telefono)
-              Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: TextButton(
-                  onPressed: _cargando ? null : _otroNumero,
-                  style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
-                  child: Text(_recordado != null
-                      ? 'No soy ${_recordado!.nombreCorto}'
-                      : 'Usar otro número'),
-                ),
+            const SizedBox(height: 18),
+            if (repitiendo)
+              OutlinedButton(
+                onPressed: _cargando
+                    ? null
+                    : () => setState(() {
+                        _pinNuevo = null;
+                        _pin = '';
+                        _reinicio++;
+                      }),
+                child: const Text('Volver'),
+              )
+            else
+              FilledButton(
+                key: const ValueKey('boton-ingresar'),
+                onPressed: _cargando || _pin.length != longitudPin
+                    ? null
+                    : _ingresar,
+                child: const Text('Ingresar'),
               ),
+            const SizedBox(height: 12),
+            const Text(
+              '¿Olvidaste el PIN? Pedíselo al encargado.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 15,
+                color: ColoresTrazaLabor.textoSecundario,
+              ),
+            ),
           ],
         ),
       ),
     );
   }
+}
+
+class _Rotulo extends StatelessWidget {
+  const _Rotulo(this.texto);
+  final String texto;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 6),
+    child: Text(
+      texto,
+      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+    ),
+  );
 }

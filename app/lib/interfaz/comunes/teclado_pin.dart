@@ -3,13 +3,23 @@ import 'package:flutter/material.dart';
 import '../../dominio/pin.dart';
 import '../tema.dart';
 
-/// Teclado numérico propio para el PIN: teclas de 64 dp (cómodas con guantes
+/// Teclado numérico propio para el PIN: teclas de 58 dp (cómodas con guantes
 /// o a pleno sol), sin depender del teclado del sistema. Al completar los seis
-/// dígitos llama a [onCompleto] y se limpia.
+/// dígitos llama a [onCompleto] y se limpia; con [enviarAlCompletar] en
+/// `false` conserva los dígitos y avisa cada cambio por [onCambio] (el envío
+/// lo hace un botón "Ingresar").
 class TecladoPin extends StatefulWidget {
-  const TecladoPin({required this.onCompleto, this.habilitado = true, super.key});
+  const TecladoPin({
+    this.onCompleto,
+    this.onCambio,
+    this.enviarAlCompletar = true,
+    this.habilitado = true,
+    super.key,
+  });
 
-  final ValueChanged<String> onCompleto;
+  final ValueChanged<String>? onCompleto;
+  final ValueChanged<String>? onCambio;
+  final bool enviarAlCompletar;
   final bool habilitado;
 
   @override
@@ -22,16 +32,18 @@ class _TecladoPinState extends State<TecladoPin> {
   void _tocar(String d) {
     if (!widget.habilitado || _digitos.length >= longitudPin) return;
     setState(() => _digitos += d);
-    if (_digitos.length == longitudPin) {
+    widget.onCambio?.call(_digitos);
+    if (_digitos.length == longitudPin && widget.enviarAlCompletar) {
       final pin = _digitos;
       setState(() => _digitos = '');
-      widget.onCompleto(pin);
+      widget.onCompleto?.call(pin);
     }
   }
 
   void _borrar() {
     if (!widget.habilitado || _digitos.isEmpty) return;
     setState(() => _digitos = _digitos.substring(0, _digitos.length - 1));
+    widget.onCambio?.call(_digitos);
   }
 
   @override
@@ -56,13 +68,15 @@ class _TecladoPinState extends State<TecladoPin> {
                         ? ColoresTrazaLabor.verdeCampo
                         : Colors.transparent,
                     border: Border.all(
-                        color: ColoresTrazaLabor.verdeCampo, width: 2),
+                      color: ColoresTrazaLabor.verdeCampo,
+                      width: 2,
+                    ),
                   ),
                 ),
             ],
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
         for (final fila in const [
           ['1', '2', '3'],
           ['4', '5', '6'],
@@ -72,10 +86,12 @@ class _TecladoPinState extends State<TecladoPin> {
           Row(
             children: [
               for (final tecla in fila)
-                Expanded(child: Padding(
-                  padding: const EdgeInsets.all(6),
-                  child: _tecla(tecla),
-                )),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(6),
+                    child: _tecla(tecla),
+                  ),
+                ),
             ],
           ),
       ],
@@ -83,21 +99,32 @@ class _TecladoPinState extends State<TecladoPin> {
   }
 
   Widget _tecla(String tecla) {
-    if (tecla.isEmpty) return const SizedBox(height: 64);
+    if (tecla.isEmpty) return const SizedBox(height: 58);
     final esBorrar = tecla == '<';
     return SizedBox(
-      height: 64,
+      height: 58,
       child: OutlinedButton(
         key: ValueKey('tecla-$tecla'),
-        onPressed: widget.habilitado ? (esBorrar ? _borrar : () => _tocar(tecla)) : null,
+        onPressed: widget.habilitado
+            ? (esBorrar ? _borrar : () => _tocar(tecla))
+            : null,
         style: OutlinedButton.styleFrom(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
           padding: EdgeInsets.zero,
+          foregroundColor: ColoresTrazaLabor.texto,
+          side: const BorderSide(color: Color(0xFFC9C5B8), width: 1.4),
         ),
         child: esBorrar
             ? const Icon(Icons.backspace_outlined, semanticLabel: 'Borrar')
-            : Text(tecla,
-                style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w600)),
+            : Text(
+                tecla,
+                style: const TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
       ),
     );
   }

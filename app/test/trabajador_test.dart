@@ -32,16 +32,28 @@ void main() {
     db = BaseDatos(NativeDatabase.memory());
     final ahora = DateTime.now();
     for (final p in [encargado, juan]) {
-      await db.into(db.usuarios).insert(UsuariosCompanion.insert(
-          id: p.id,
-          nombre: p.nombre,
-          telefono: p.telefono,
-          rol: p.rol,
-          createdAtDevice: ahora));
+      await db
+          .into(db.usuarios)
+          .insert(
+            UsuariosCompanion.insert(
+              id: p.id,
+              nombre: p.nombre,
+              telefono: p.telefono,
+              rol: p.rol,
+              createdAtDevice: ahora,
+            ),
+          );
     }
-    await db.into(db.unidadesProductivas).insert(
-        UnidadesProductivasCompanion.insert(
-            id: 'up-7', nombre: 'Lote 7', tipo: 'LOTE', codigoQr: 'qr-7'));
+    await db
+        .into(db.unidadesProductivas)
+        .insert(
+          UnidadesProductivasCompanion.insert(
+            id: 'up-7',
+            nombre: 'Lote 7',
+            tipo: 'LOTE',
+            codigoQr: 'qr-7',
+          ),
+        );
     // El encargado asignó en este mismo teléfono una labor de mantenimiento.
     tareaId = await RepositorioLabores(db).crearLabor(
       BorradorLabor(
@@ -61,43 +73,56 @@ void main() {
     tester.view.physicalSize = const Size(900, 3000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
-    await tester.pumpWidget(ProviderScope(
-      overrides: [
-        baseDatosProvider.overrideWithValue(db),
-        hayConexionProvider.overrideWith((ref) => Stream.value(false)),
-        sesionProvider.overrideWith(_SesionJuan.new),
-      ],
-      child: MaterialApp(home: pantalla),
-    ));
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          baseDatosProvider.overrideWithValue(db),
+          hayConexionProvider.overrideWith((ref) => Stream.value(false)),
+          sesionProvider.overrideWith(_SesionJuan.new),
+        ],
+        child: MaterialApp(home: pantalla),
+      ),
+    );
     await tester.pumpAndSettle();
   }
 
-  testWidgets('mis tareas de hoy: la labor con su unidad, tipo y estado (HU-006 c1, c2)',
-      (tester) async {
-    await abrir(tester, const PantallaInicioTrabajador());
+  testWidgets(
+    'mis tareas de hoy: la labor con su unidad, tipo y estado (HU-006 c1, c2)',
+    (tester) async {
+      await abrir(tester, const PantallaInicioTrabajador());
 
-    expect(find.text('Lote 7 · Mantenimiento'), findsOneWidget);
-    expect(find.text('Pendiente'), findsOneWidget);
-    expect(find.text('Sin conexión'), findsOneWidget);
-    // Lo que asignó el encargado todavía no se envió.
-    expect(find.textContaining('operaciones pendientes de envío'), findsOneWidget);
-    await desmontar(tester);
-  });
+      expect(find.text('Lote 7'), findsOneWidget);
+      expect(find.text('Mantenimiento'), findsOneWidget);
+      expect(find.text('Por hacer · tocá para empezar'), findsOneWidget);
+      // Franja: sin señal y lo que asignó el encargado todavía sin enviar (c2).
+      expect(find.text('Sin señal · 1 cosa guardada'), findsOneWidget);
+      await desmontar(tester);
+    },
+  );
 
-  testWidgets('ejecución: marcar un ítem avanza la lista sin conexión (HU-007 c1)',
-      (tester) async {
-    await abrir(tester, PantallaEjecucion(tareaId: tareaId));
+  testWidgets(
+    'ejecución: marcar un ítem avanza la lista sin conexión (HU-007 c1)',
+    (tester) async {
+      await abrir(tester, PantallaEjecucion(tareaId: tareaId));
 
-    expect(find.text('Lista de verificación · 0 de 2 ítems'), findsOneWidget);
-    await tester.tap(find.text('Trabajo terminado'));
-    await tester.pumpAndSettle();
+      expect(find.text('0 de 2'), findsOneWidget);
+      expect(find.text('Paso 1 de 3'), findsOneWidget);
+      await tester.tap(find.text('Trabajo terminado'));
+      await tester.pumpAndSettle();
 
-    expect(find.text('Lista de verificación · 1 de 2 ítems'), findsOneWidget);
-    expect(find.byKey(const ValueKey('boton-iniciar')), findsNothing,
-        reason: 'marcar el ítem inició la labor');
-    final eventos = await db.select(db.eventos).get();
-    expect(eventos.map((e) => e.tipo),
-        containsAll(['INICIADA', 'ITEM_COMPLETADO']));
-    await desmontar(tester);
-  });
+      expect(find.text('1 de 2'), findsOneWidget);
+      expect(find.text('Paso 2 de 3'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('boton-iniciar')),
+        findsNothing,
+        reason: 'marcar el ítem inició la labor',
+      );
+      final eventos = await db.select(db.eventos).get();
+      expect(
+        eventos.map((e) => e.tipo),
+        containsAll(['INICIADA', 'ITEM_COMPLETADO']),
+      );
+      await desmontar(tester);
+    },
+  );
 }

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ícono chico de las notificaciones (silueta blanca, como pide Android). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M5,19.5 C4.5,12 9,6.5 19.5,5 C20,14 15,19.5 5,19.5 Z M4.3,20.7 L3.6,20 L12.5,11.1 L13.2,11.8 Z" />
+</vector>

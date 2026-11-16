@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../comunes/caja_mensaje.dart';
+import '../comunes/barra_app.dart';
 import '../proveedores.dart';
 import '../tema.dart';
 
@@ -14,7 +14,10 @@ class PantallaTrabajadores extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final trabajadores = ref.watch(trabajadoresProvider).value ?? const [];
     return Scaffold(
-      appBar: AppBar(title: const Text('Trabajadores')),
+      appBar: const BarraApp(
+        titulo: 'Trabajadores',
+        subtitulo: 'Altas, cambios y PIN',
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push('/encargado/trabajadores/nuevo'),
         icon: const Icon(Icons.person_add_alt_1),
@@ -23,12 +26,14 @@ class PantallaTrabajadores extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 96),
         children: [
-          const BarraEstado(),
           if (trabajadores.isEmpty)
             const Padding(
               padding: EdgeInsets.only(top: 40),
-              child: Text('Todavía no hay trabajadores cargados.',
-                  textAlign: TextAlign.center, style: TextStyle(fontSize: 18)),
+              child: Text(
+                'Todavía no hay trabajadores cargados.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 18),
+              ),
             ),
           for (final t in trabajadores)
             Card(
@@ -49,10 +54,11 @@ class PantallaTrabajadores extends ConsumerWidget {
                     if (!t.activo) 'Desactivado',
                   ].join(' · '),
                   style: TextStyle(
-                      fontSize: 15,
-                      color: t.activo
-                          ? ColoresTrazaLabor.textoSecundario
-                          : ColoresTrazaLabor.sinConexion),
+                    fontSize: 15,
+                    color: t.activo
+                        ? ColoresTrazaLabor.textoSecundario
+                        : ColoresTrazaLabor.sinConexion,
+                  ),
                 ),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.push('/encargado/trabajadores/${t.id}'),

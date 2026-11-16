@@ -46,6 +46,7 @@ class DetalleTarea {
     required this.items,
     required this.evidencias,
     required this.qrVerificado,
+    this.qrLeidoEn,
   });
 
   final Tarea tarea;
@@ -55,6 +56,9 @@ class DetalleTarea {
   /// Evidencias del ciclo vigente (después de la última reasignación).
   final List<Evidencia> evidencias;
   final bool qrVerificado;
+
+  /// Hora (del teléfono) en que se leyó el QR de la unidad.
+  final DateTime? qrLeidoEn;
 
   EstadoTarea get estado => EstadoTarea.desdeValor(tarea.estadoActual);
   bool get admiteEjecucion => estado.admiteEjecucionLocal;
@@ -229,6 +233,10 @@ SELECT t.*, u.nombre AS unidad_nombre,
             v,
       ],
       qrVerificado: ciclo.any((e) => e.tipo == TipoEvento.qrVerificado),
+      qrLeidoEn: ciclo
+          .where((e) => e.tipo == TipoEvento.qrVerificado)
+          .lastOrNull
+          ?.creadoEnDispositivo,
     );
   }
 

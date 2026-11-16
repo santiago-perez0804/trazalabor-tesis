@@ -16,10 +16,15 @@ void main() {
 
     test('el de otra unidad se informa con su nombre y no coincide (c2)', () {
       final r = compararQr(
-          leido: potrero, esperado: lote7, nombresPorCodigo: {potrero: 'Potrero 2'});
+        leido: potrero,
+        esperado: lote7,
+        nombresPorCodigo: {potrero: 'Potrero 2'},
+      );
       expect(r, isA<QrDeOtraUnidad>());
-      expect(explicarQr(r, unidadEsperada: 'Lote 7'),
-          'Ese código es de Potrero 2, no de Lote 7. Buscá el cartel de Lote 7.');
+      expect(
+        explicarQr(r, unidadEsperada: 'Lote 7'),
+        'Ese código es de Potrero 2, no de Lote 7. Buscá el cartel de Lote 7.',
+      );
     });
 
     test('un QR cualquiera no es de TrazaLabor', () {
@@ -37,19 +42,32 @@ void main() {
 
     test('texto no vacío; tildar no pide valor', () {
       expect(validarValorItem(TipoRespuesta.texto, '  '), isNotNull);
-      expect(normalizarValorItem(TipoRespuesta.texto, ' Glifosato '), 'Glifosato');
+      expect(
+        normalizarValorItem(TipoRespuesta.texto, ' Glifosato '),
+        'Glifosato',
+      );
       expect(validarValorItem(TipoRespuesta.check, null), isNull);
       expect(normalizarValorItem(TipoRespuesta.check, null), 'SI');
     });
   });
 
   test('estado de la bandeja (pantalla B)', () {
-    expect(estadoBandeja(EstadoTarea.asignada, porEnviar: true).etiqueta, 'Pendiente');
-    expect(estadoBandeja(EstadoTarea.iniciada, porEnviar: true).etiqueta, 'En curso');
-    expect(estadoBandeja(EstadoTarea.completada, porEnviar: true).etiqueta,
-        'Completada · por enviar');
-    expect(estadoBandeja(EstadoTarea.completada, porEnviar: false).etiqueta,
-        'Completada · sincronizada');
+    expect(
+      estadoBandeja(EstadoTarea.asignada, porEnviar: true).etiqueta,
+      'Por hacer · tocá para empezar',
+    );
+    expect(
+      estadoBandeja(EstadoTarea.iniciada, porEnviar: true).etiqueta,
+      'Empezada',
+    );
+    expect(
+      estadoBandeja(EstadoTarea.completada, porEnviar: true).etiqueta,
+      'Terminada · se envía con señal',
+    );
+    expect(
+      estadoBandeja(EstadoTarea.completada, porEnviar: false).etiqueta,
+      'Terminada · enviada',
+    );
     expect(admiteEjecucion(EstadoTarea.completada), isFalse);
     expect(admiteEjecucion(EstadoTarea.iniciada), isTrue);
   });

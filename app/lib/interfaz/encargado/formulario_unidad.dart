@@ -7,6 +7,7 @@ import '../../dominio/catalogos.dart';
 import '../../infra/exportar_qr.dart';
 import '../../repositorio/base_datos.dart';
 import '../../repositorio/repositorio_trabajadores.dart' show DatosRechazados;
+import '../comunes/barra_app.dart';
 import '../comunes/caja_mensaje.dart';
 import '../proveedores.dart';
 import '../tema.dart';
@@ -45,8 +46,9 @@ class _FormularioUnidadState extends ConsumerState<FormularioUnidad> {
     _cargado = true;
     _nombre.text = u.nombre;
     _tipo = TipoUnidad.desdeValor(u.tipo);
-    _superficie.text =
-        u.superficieHa == null ? '' : formatearHectareas(u.superficieHa!);
+    _superficie.text = u.superficieHa == null
+        ? ''
+        : formatearHectareas(u.superficieHa!);
   }
 
   Future<void> _guardar() async {
@@ -55,14 +57,21 @@ class _FormularioUnidadState extends ConsumerState<FormularioUnidad> {
     try {
       if (_esAlta) {
         final nueva = await repo.alta(
-            nombre: _nombre.text, tipo: _tipo, superficie: _superficie.text);
+          nombre: _nombre.text,
+          tipo: _tipo,
+          superficie: _superficie.text,
+        );
         if (!mounted) return;
         avisarGuardado(context, 'Unidad agregada. Ya podés exportar su QR.');
         // Se abre su ficha para exportar el código enseguida.
         context.pushReplacement('/encargado/unidades/${nueva.id}');
       } else {
-        await repo.modificar(widget.id!,
-            nombre: _nombre.text, tipo: _tipo, superficie: _superficie.text);
+        await repo.modificar(
+          widget.id!,
+          nombre: _nombre.text,
+          tipo: _tipo,
+          superficie: _superficie.text,
+        );
         if (!mounted) return;
         avisarGuardado(context, 'Cambios guardados.');
         context.pop();
@@ -82,7 +91,8 @@ class _FormularioUnidadState extends ConsumerState<FormularioUnidad> {
         nombre: u.nombre,
         detalle: [
           TipoUnidad.desdeValor(u.tipo).etiqueta,
-          if (u.superficieHa != null) '${formatearHectareas(u.superficieHa!)} ha',
+          if (u.superficieHa != null)
+            '${formatearHectareas(u.superficieHa!)} ha',
         ].join(' · '),
       );
     } finally {
@@ -93,34 +103,39 @@ class _FormularioUnidadState extends ConsumerState<FormularioUnidad> {
   Future<void> _cambiarActiva(UnidadProductiva u) async {
     final repo = ref.read(repositorioUnidadesProvider);
     if (u.activa) {
-      final ok = await confirmar(context,
-          titulo: 'Desactivar ${u.nombre}',
-          texto: 'No se va a ofrecer para labores nuevas. '
-              'Sus labores e historial se conservan.',
-          accion: 'Desactivar');
+      final ok = await confirmar(
+        context,
+        titulo: 'Desactivar ${u.nombre}',
+        texto:
+            'No se va a ofrecer para labores nuevas. '
+            'Sus labores e historial se conservan.',
+        accion: 'Desactivar',
+      );
       if (!ok) return;
       await repo.desactivar(u.id);
     } else {
       await repo.reactivar(u.id);
     }
     if (mounted) {
-      avisarGuardado(context, u.activa ? 'Unidad desactivada.' : 'Unidad activada.');
+      avisarGuardado(
+        context,
+        u.activa ? 'Unidad desactivada.' : 'Unidad activada.',
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final existente =
-        _esAlta ? null : ref.watch(unidadProvider(widget.id!)).value;
+    final existente = _esAlta
+        ? null
+        : ref.watch(unidadProvider(widget.id!)).value;
     if (existente != null) _cargar(existente);
 
     return Scaffold(
-      appBar: AppBar(
-          title: Text(_esAlta ? 'Nueva unidad productiva' : 'Unidad productiva')),
+      appBar: BarraApp(titulo: _esAlta ? 'Nuevo lote o lugar' : 'Lote o lugar'),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          const BarraEstado(),
           if (existente != null) ...[
             Center(
               child: Container(
@@ -166,9 +181,13 @@ class _FormularioUnidadState extends ConsumerState<FormularioUnidad> {
             ],
           ),
           if (_errores['tipo'] != null)
-            Text(_errores['tipo']!,
-                style: const TextStyle(
-                    fontSize: 14, color: ColoresTrazaLabor.sinConexion)),
+            Text(
+              _errores['tipo']!,
+              style: const TextStyle(
+                fontSize: 14,
+                color: ColoresTrazaLabor.sinConexion,
+              ),
+            ),
           const SizedBox(height: 16),
           TextField(
             controller: _superficie,
@@ -196,19 +215,23 @@ class _FormularioUnidadState extends ConsumerState<FormularioUnidad> {
                   ? 'Activa: se ofrece para labores nuevas.'
                   : 'Desactivada: no se ofrece para labores nuevas.',
               style: TextStyle(
-                  fontSize: 16,
-                  color: existente.activa
-                      ? ColoresTrazaLabor.enLinea
-                      : ColoresTrazaLabor.sinConexion),
+                fontSize: 16,
+                color: existente.activa
+                    ? ColoresTrazaLabor.enLinea
+                    : ColoresTrazaLabor.sinConexion,
+              ),
             ),
             const SizedBox(height: 12),
             OutlinedButton.icon(
               onPressed: _ocupado ? null : () => _cambiarActiva(existente),
-              icon: Icon(existente.activa
-                  ? Icons.block_outlined
-                  : Icons.check_circle_outline),
+              icon: Icon(
+                existente.activa
+                    ? Icons.block_outlined
+                    : Icons.check_circle_outline,
+              ),
               label: Text(
-                  existente.activa ? 'Desactivar unidad' : 'Volver a activar'),
+                existente.activa ? 'Desactivar unidad' : 'Volver a activar',
+              ),
             ),
           ],
         ],

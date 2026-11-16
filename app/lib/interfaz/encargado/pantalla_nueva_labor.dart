@@ -8,6 +8,7 @@ import '../../dominio/plantillas_labor.dart';
 import '../../dominio/validar_cierre.dart';
 import '../../dominio/validar_labor.dart';
 import '../../repositorio/repositorio_labores.dart';
+import '../comunes/barra_app.dart';
 import '../comunes/caja_mensaje.dart';
 import '../proveedores.dart';
 import '../tema.dart';
@@ -66,15 +67,15 @@ class _PantallaNuevaLaborState extends ConsumerState<PantallaNuevaLabor> {
   }
 
   BorradorLabor _borrador() => BorradorLabor(
-        unidadProductivaId: _unidadId,
-        asignadoId: _asignadoId,
-        tipoLabor: _tipo,
-        fechaProgramada: _fecha,
-        descripcion: _descripcion.text,
-        items: _items.map((i) => i.aBorrador()).toList(),
-        evidencia: _evidencia,
-        requiereQr: _requiereQr,
-      );
+    unidadProductivaId: _unidadId,
+    asignadoId: _asignadoId,
+    tipoLabor: _tipo,
+    fechaProgramada: _fecha,
+    descripcion: _descripcion.text,
+    items: _items.map((i) => i.aBorrador()).toList(),
+    evidencia: _evidencia,
+    requiereQr: _requiereQr,
+  );
 
   void _refrescarFaltantes() {
     if (_intentado) _faltantes = validarLabor(_borrador());
@@ -105,8 +106,10 @@ class _PantallaNuevaLaborState extends ConsumerState<PantallaNuevaLabor> {
           .read(repositorioLaboresProvider)
           .crearLabor(_borrador(), creadorId: creadorId);
       if (!mounted) return;
-      avisarGuardado(context,
-          'Labor guardada en el teléfono y asignada a $nombreTrabajador.');
+      avisarGuardado(
+        context,
+        'Labor guardada en el teléfono y asignada a $nombreTrabajador.',
+      );
       context.pop();
     } on LaborIncompleta catch (e) {
       setState(() => _faltantes = e.faltantes);
@@ -114,6 +117,21 @@ class _PantallaNuevaLaborState extends ConsumerState<PantallaNuevaLabor> {
       if (mounted) setState(() => _ocupado = false);
     }
   }
+
+  bool get _pideFoto =>
+      _evidencia == EvidenciaRequerida.foto ||
+      _evidencia == EvidenciaRequerida.fotoYAudio;
+  bool get _pideAudio =>
+      _evidencia == EvidenciaRequerida.audio ||
+      _evidencia == EvidenciaRequerida.fotoYAudio;
+
+  static EvidenciaRequerida _armarEvidencia(bool foto, bool audio) =>
+      switch ((foto, audio)) {
+        (true, true) => EvidenciaRequerida.fotoYAudio,
+        (true, false) => EvidenciaRequerida.foto,
+        (false, true) => EvidenciaRequerida.audio,
+        (false, false) => EvidenciaRequerida.ninguna,
+      };
 
   @override
   Widget build(BuildContext context) {
@@ -134,11 +152,13 @@ class _PantallaNuevaLaborState extends ConsumerState<PantallaNuevaLabor> {
     final fecha = DateFormat("EEEE d 'de' MMMM", 'es').format(_fecha);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Nueva labor')),
+      appBar: const BarraApp(
+        titulo: 'Nueva labor',
+        subtitulo: 'Qué hay que hacer, dónde y quién',
+      ),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         children: [
-          const BarraEstado(),
           if (unidades.isEmpty || trabajadores.isEmpty)
             Padding(
               padding: const EdgeInsets.only(bottom: 16),
@@ -148,14 +168,18 @@ class _PantallaNuevaLaborState extends ConsumerState<PantallaNuevaLabor> {
                 if (trabajadores.isEmpty) 'Primero cargá un trabajador activo.',
               ]),
             ),
+          const _Pregunta('¿Dónde?'),
           DropdownButtonFormField<String>(
             key: const ValueKey('campo-unidad'),
             initialValue: _unidadId,
             isExpanded: true,
-            style: const TextStyle(fontSize: 18, color: ColoresTrazaLabor.texto),
+            style: const TextStyle(
+              fontFamily: 'Atkinson',
+              fontSize: 18,
+              color: ColoresTrazaLabor.texto,
+            ),
             decoration: InputDecoration(
-              labelText: 'Unidad productiva',
-              prefixIcon: const Icon(Icons.place_outlined),
+              hintText: 'Elegí el lote o lugar',
               errorText: marca(_unidadId == null),
             ),
             items: [
@@ -163,7 +187,8 @@ class _PantallaNuevaLaborState extends ConsumerState<PantallaNuevaLabor> {
                 DropdownMenuItem(
                   value: u.id,
                   child: Text(
-                      '${u.nombre} · ${TipoUnidad.desdeValor(u.tipo).etiqueta}'),
+                    '${u.nombre} · ${TipoUnidad.desdeValor(u.tipo).etiqueta}',
+                  ),
                 ),
             ],
             onChanged: (v) => setState(() {
@@ -171,23 +196,30 @@ class _PantallaNuevaLaborState extends ConsumerState<PantallaNuevaLabor> {
               _refrescarFaltantes();
             }),
           ),
-          const SizedBox(height: 16),
+          const _Pregunta('¿Quién la hace?'),
           DropdownButtonFormField<String>(
             key: const ValueKey('campo-trabajador'),
             initialValue: _asignadoId,
             isExpanded: true,
-            style: const TextStyle(fontSize: 18, color: ColoresTrazaLabor.texto),
+            style: const TextStyle(
+              fontFamily: 'Atkinson',
+              fontSize: 18,
+              color: ColoresTrazaLabor.texto,
+            ),
             decoration: InputDecoration(
-              labelText: 'Trabajador',
-              prefixIcon: const Icon(Icons.person_outline),
+              hintText: 'Elegí el trabajador',
               errorText: marca(_asignadoId == null),
             ),
             items: [
               for (final t in trabajadores)
                 DropdownMenuItem(
                   value: t.id,
-                  child: Text([t.nombre, if (t.especialidad != null) t.especialidad]
-                      .join(' · ')),
+                  child: Text(
+                    [
+                      t.nombre,
+                      if (t.especialidad != null) t.especialidad,
+                    ].join(' · '),
+                  ),
                 ),
             ],
             onChanged: (v) => setState(() {
@@ -195,15 +227,18 @@ class _PantallaNuevaLaborState extends ConsumerState<PantallaNuevaLabor> {
               _refrescarFaltantes();
             }),
           ),
-          const SizedBox(height: 16),
+          const _Pregunta('¿Qué labor?'),
           DropdownButtonFormField<TipoLabor>(
             key: const ValueKey('campo-tipo'),
             initialValue: _tipo,
             isExpanded: true,
-            style: const TextStyle(fontSize: 18, color: ColoresTrazaLabor.texto),
+            style: const TextStyle(
+              fontFamily: 'Atkinson',
+              fontSize: 18,
+              color: ColoresTrazaLabor.texto,
+            ),
             decoration: InputDecoration(
-              labelText: 'Tipo de labor',
-              prefixIcon: const Icon(Icons.agriculture_outlined),
+              hintText: 'Elegí el tipo de labor',
               errorText: marca(_tipo == null),
             ),
             items: [
@@ -212,7 +247,7 @@ class _PantallaNuevaLaborState extends ConsumerState<PantallaNuevaLabor> {
             ],
             onChanged: _elegirTipo,
           ),
-          const SizedBox(height: 16),
+          const _Pregunta('¿Cuándo?'),
           OutlinedButton.icon(
             onPressed: _elegirFecha,
             icon: const Icon(Icons.event),
@@ -225,23 +260,27 @@ class _PantallaNuevaLaborState extends ConsumerState<PantallaNuevaLabor> {
             minLines: 1,
             textCapitalization: TextCapitalization.sentences,
             style: const TextStyle(fontSize: 17),
-            decoration:
-                const InputDecoration(labelText: 'Indicaciones (opcional)'),
+            decoration: const InputDecoration(
+              labelText: 'Indicaciones (opcional)',
+            ),
           ),
-          const SizedBox(height: 24),
-          const Text('Lista de verificación',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 8),
+          const _Pregunta('Lista de verificación'),
           if (_tipo == null)
-            const Text('Elegí el tipo de labor para cargar su lista.',
-                style: TextStyle(
-                    fontSize: 16, color: ColoresTrazaLabor.textoSecundario))
+            const Text(
+              'Elegí el tipo de labor para cargar su lista.',
+              style: TextStyle(
+                fontSize: 16,
+                color: ColoresTrazaLabor.textoSecundario,
+              ),
+            )
           else
             EditorChecklist(
               items: _items,
               onCambio: () => setState(_refrescarFaltantes),
               onAgregar: () => setState(() {
-                _items.add(ItemEditable.desde(const ItemBorrador(descripcion: '')));
+                _items.add(
+                  ItemEditable.desde(const ItemBorrador(descripcion: '')),
+                );
                 _refrescarFaltantes();
               }),
               onQuitar: (i) => setState(() {
@@ -249,34 +288,40 @@ class _PantallaNuevaLaborState extends ConsumerState<PantallaNuevaLabor> {
                 _refrescarFaltantes();
               }),
             ),
-          const SizedBox(height: 24),
-          const Text('Evidencia requerida al cerrar',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
+          const _Pregunta('Pedir al terminar'),
+          Row(
             children: [
-              for (final (e, etiqueta) in const [
-                (EvidenciaRequerida.ninguna, 'Ninguna'),
-                (EvidenciaRequerida.foto, 'Foto'),
-                (EvidenciaRequerida.audio, 'Audio'),
-                (EvidenciaRequerida.fotoYAudio, 'Foto y audio'),
-              ])
-                ChoiceChip(
-                  label: Text(etiqueta, style: const TextStyle(fontSize: 17)),
-                  selected: _evidencia == e,
-                  onSelected: (_) => setState(() => _evidencia = e),
+              Expanded(
+                child: _Alternador(
+                  key: const ValueKey('pedir-foto'),
+                  texto: 'Foto',
+                  activo: _pideFoto,
+                  onTap: () => setState(
+                    () => _evidencia = _armarEvidencia(!_pideFoto, _pideAudio),
+                  ),
                 ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _Alternador(
+                  key: const ValueKey('pedir-audio'),
+                  texto: 'Audio',
+                  activo: _pideAudio,
+                  onTap: () => setState(
+                    () => _evidencia = _armarEvidencia(_pideFoto, !_pideAudio),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _Alternador(
+                  key: const ValueKey('pedir-qr'),
+                  texto: 'Código QR',
+                  activo: _requiereQr,
+                  onTap: () => setState(() => _requiereQr = !_requiereQr),
+                ),
+              ),
             ],
-          ),
-          const SizedBox(height: 8),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Requiere verificación QR',
-                style: TextStyle(fontSize: 18)),
-            subtitle: const Text('El trabajador escanea el código del lugar.'),
-            value: _requiereQr,
-            onChanged: (v) => setState(() => _requiereQr = v),
           ),
           const SizedBox(height: 16),
           if (_faltantes.isNotEmpty) ...[
@@ -288,13 +333,13 @@ class _PantallaNuevaLaborState extends ConsumerState<PantallaNuevaLabor> {
             onPressed: _ocupado || sesion is! ConSesion
                 ? null
                 : () => _asignar(
-                      sesion.perfil.id,
-                      trabajadores
-                              .where((t) => t.id == _asignadoId)
-                              .firstOrNull
-                              ?.nombre ??
-                          'el trabajador',
-                    ),
+                    sesion.perfil.id,
+                    trabajadores
+                            .where((t) => t.id == _asignadoId)
+                            .firstOrNull
+                            ?.nombre ??
+                        'el trabajador',
+                  ),
             icon: const Icon(Icons.send),
             label: const Text('Asignar labor'),
           ),
@@ -303,4 +348,55 @@ class _PantallaNuevaLaborState extends ConsumerState<PantallaNuevaLabor> {
       ),
     );
   }
+}
+
+/// Título de cada bloque del formulario ("¿Dónde?", "¿Quién la hace?").
+class _Pregunta extends StatelessWidget {
+  const _Pregunta(this.texto);
+  final String texto;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(top: 16, bottom: 6),
+    child: Text(
+      texto,
+      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+    ),
+  );
+}
+
+/// Botón que se prende o se apaga (Foto / Audio / Código QR).
+class _Alternador extends StatelessWidget {
+  const _Alternador({
+    super.key,
+    required this.texto,
+    required this.activo,
+    required this.onTap,
+  });
+
+  final String texto;
+  final bool activo;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    toggled: activo,
+    child: OutlinedButton(
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size(48, 52),
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        backgroundColor: activo
+            ? ColoresTrazaLabor.franjaConSenal
+            : Colors.white,
+        side: BorderSide(
+          color: ColoresTrazaLabor.verdeCampo,
+          width: activo ? 2.2 : 1.2,
+        ),
+      ),
+      onPressed: onTap,
+      // Activo = fondo verde claro y borde grueso; sin tilde, para que el
+      // texto entre entero en tres columnas.
+      child: FittedBox(fit: BoxFit.scaleDown, child: Text(texto, maxLines: 1)),
+    ),
+  );
 }

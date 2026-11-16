@@ -2,12 +2,15 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'comunes/pantalla_envios.dart';
 import 'encargado/formulario_trabajador.dart';
 import 'encargado/formulario_unidad.dart';
+import 'encargado/pantalla_detalle_labor.dart';
 import 'encargado/pantalla_inicio_encargado.dart';
 import 'encargado/pantalla_nueva_labor.dart';
 import 'encargado/pantalla_trabajadores.dart';
 import 'encargado/pantalla_unidades.dart';
+import 'encargado/pantalla_verificacion.dart';
 import 'ingreso/pantalla_ingreso.dart';
 import 'proveedores.dart';
 import 'trabajador/pantalla_cierre.dart';
@@ -31,11 +34,14 @@ final routerProvider = Provider<GoRouter>((ref) {
           return ruta == '/ingreso' ? null : '/ingreso';
         case ConSesion(:final perfil):
           final inicio = perfil.esEncargado ? '/encargado' : '/trabajador';
+          // "Para enviar" (pantalla H) es de los dos roles.
+          if (ruta == '/envios') return null;
           return ruta.startsWith(inicio) ? null : inicio;
       }
     },
     routes: [
       GoRoute(path: '/ingreso', builder: (_, _) => const PantallaIngreso()),
+      GoRoute(path: '/envios', builder: (_, _) => const PantallaEnvios()),
       GoRoute(
         path: '/encargado',
         builder: (_, _) => const PantallaInicioEncargado(),
@@ -45,12 +51,14 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, _) => const PantallaTrabajadores(),
             routes: [
               GoRoute(
-                  path: 'nuevo',
-                  builder: (_, _) => const FormularioTrabajador()),
+                path: 'nuevo',
+                builder: (_, _) => const FormularioTrabajador(),
+              ),
               GoRoute(
-                  path: ':id',
-                  builder: (_, estado) =>
-                      FormularioTrabajador(id: estado.pathParameters['id'])),
+                path: ':id',
+                builder: (_, estado) =>
+                    FormularioTrabajador(id: estado.pathParameters['id']),
+              ),
             ],
           ),
           GoRoute(
@@ -58,16 +66,33 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, _) => const PantallaUnidades(),
             routes: [
               GoRoute(
-                  path: 'nueva', builder: (_, _) => const FormularioUnidad()),
+                path: 'nueva',
+                builder: (_, _) => const FormularioUnidad(),
+              ),
               GoRoute(
-                  path: ':id',
-                  builder: (_, estado) =>
-                      FormularioUnidad(id: estado.pathParameters['id'])),
+                path: ':id',
+                builder: (_, estado) =>
+                    FormularioUnidad(id: estado.pathParameters['id']),
+              ),
             ],
           ),
           GoRoute(
-              path: 'labores/nueva',
-              builder: (_, _) => const PantallaNuevaLabor()),
+            path: 'labores/nueva',
+            builder: (_, _) => const PantallaNuevaLabor(),
+          ),
+          GoRoute(
+            path: 'verificacion',
+            builder: (_, estado) => PantallaVerificacion(
+              pestanaInicial: estado.uri.queryParameters['historial'] == '1'
+                  ? 1
+                  : 0,
+            ),
+          ),
+          GoRoute(
+            path: 'labor/:id',
+            builder: (_, estado) =>
+                PantallaDetalleLabor(tareaId: estado.pathParameters['id']!),
+          ),
         ],
       ),
       GoRoute(
@@ -80,9 +105,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                 PantallaEjecucion(tareaId: estado.pathParameters['id']!),
             routes: [
               GoRoute(
-                  path: 'cierre',
-                  builder: (_, estado) =>
-                      PantallaCierre(tareaId: estado.pathParameters['id']!)),
+                path: 'cierre',
+                builder: (_, estado) =>
+                    PantallaCierre(tareaId: estado.pathParameters['id']!),
+              ),
             ],
           ),
         ],

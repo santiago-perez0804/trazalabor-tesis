@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../dominio/catalogos.dart';
 import '../../dominio/tipo_evento.dart';
@@ -8,14 +9,16 @@ import '../../dominio/validar_cierre.dart';
 import '../../dominio/validar_qr.dart';
 import '../../repositorio/base_datos.dart';
 import '../../repositorio/repositorio_ejecucion.dart';
+import '../comunes/barra_app.dart';
 import '../comunes/caja_mensaje.dart';
+import '../comunes/piezas.dart';
 import '../proveedores.dart';
 import '../tema.dart';
 import 'escaner_qr.dart';
 
-/// Pantalla C de la Figura 5: ejecución de la labor con su lista de
-/// verificación y la verificación por QR (HU-007, HU-009, T-16, T-20).
-/// Cada acción queda guardada en el teléfono al instante, con o sin señal.
+/// Pantalla C de la Figura 5, "Hacer la labor": lista de verificación y
+/// verificación por QR (HU-007, HU-009, T-16, T-20). Cada acción queda
+/// guardada en el teléfono al instante, con o sin señal.
 class PantallaEjecucion extends ConsumerStatefulWidget {
   const PantallaEjecucion({super.key, required this.tareaId});
 
@@ -39,11 +42,8 @@ class _PantallaEjecucionState extends ConsumerState<PantallaEjecucion> {
       await accion();
     } on AccionRechazada catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.mensaje, style: const TextStyle(fontSize: 16)),
-          ),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.mensaje)));
       }
     } finally {
       if (mounted) setState(() => _ocupado = false);
@@ -71,50 +71,73 @@ class _PantallaEjecucionState extends ConsumerState<PantallaEjecucion> {
 
   @override
   Widget build(BuildContext context) {
-    final detalle = ref.watch(detalleTareaProvider(widget.tareaId)).value;
-    if (detalle == null) {
-      return Scaffold(
-        appBar: AppBar(),
-        body: const Center(child: CircularProgressIndicator()),
+    final d = ref.watch(detalleTareaProvider(widget.tareaId)).value;
+    if (d == null) {
+      return const Scaffold(
+        appBar: BarraApp(titulo: 'Labor'),
+        body: Center(child: CircularProgressIndicator()),
       );
     }
-    final d = detalle;
     final tipo = TipoLabor.desdeValor(d.tarea.tipoLabor);
     final abierta = d.admiteEjecucion;
-    final total = d.items.length;
+    final empezada = d.estado != EstadoTarea.asignada;
 
     return Scaffold(
-      appBar: AppBar(title: Text('${d.unidad.nombre} · ${tipo.etiqueta}')),
+      appBar: BarraApp(titulo: d.unidad.nombre, subtitulo: tipo.etiqueta),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         children: [
-          const BarraEstado(),
-          if (!abierta)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: CajaMensaje([
-                switch (d.estado) {
-                  EstadoTarea.completada => 'Labor cerrada como completada.',
-                  EstadoTarea.noCompletada =>
-                    'Labor cerrada como no completada.',
-                  EstadoTarea.verificada =>
-                    'Labor verificada por el encargado.',
-                  _ => 'Labor cerrada.',
-                },
-              ], esError: false),
+          if (!abierta) ...[
+            AvisoSuave(
+              icono: Icons.lock_outline,
+              titulo: switch (d.estado) {
+                EstadoTarea.completada => 'Labor terminada',
+                EstadoTarea.noCompletada => 'Labor cerrada sin terminar',
+                EstadoTarea.verificada => 'Labor revisada por el encargado',
+                _ => 'Labor cerrada',
+              },
+              detalle: 'Se puede mirar, pero ya no cambiar.',
             ),
-          if (d.tarea.descripcion != null) ...[
-            const Text(
-              'Indicaciones',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 4),
-            Text(d.tarea.descripcion!, style: const TextStyle(fontSize: 17)),
+            const SizedBox(height: 16),
+          ] else ...[
+            IndicadorPasos(paso: empezada ? 2 : 1),
             const SizedBox(height: 16),
           ],
+          if (d.tarea.descripcion != null) ...[
+            AvisoSuave(
+              icono: Icons.info_outline,
+              titulo: 'Indicaciones',
+              detalle: d.tarea.descripcion,
+              alerta: true,
+            ),
+            const SizedBox(height: 12),
+          ],
           _Requisitos(d),
-          const SizedBox(height: 16),
-          if (abierta && d.estado == EstadoTarea.asignada) ...[
+          const SizedBox(height: 12),
+          if (d.tarea.requiereQr) ...[
+            if (d.qrVerificado)
+              AvisoSuave(
+                icono: Icons.qr_code_2,
+                titulo: 'Estás en ${d.unidad.nombre}',
+                detalle: d.qrLeidoEn == null
+                    ? 'Código QR leído'
+                    : 'Código QR leído a las '
+                          '${DateFormat('HH:mm').format(d.qrLeidoEn!.toLocal())}',
+              )
+            else
+              OutlinedButton.icon(
+                key: const ValueKey('boton-escanear'),
+                onPressed: _ocupado || !abierta ? null : () => _escanear(d),
+                icon: const Icon(Icons.qr_code_scanner),
+                label: const Text('Escanear el código del lugar'),
+              ),
+            if (_mensajeQr != null) ...[
+              const SizedBox(height: 8),
+              CajaMensaje([_mensajeQr!]),
+            ],
+            const SizedBox(height: 16),
+          ],
+          if (abierta && !empezada) ...[
             FilledButton.icon(
               key: const ValueKey('boton-iniciar'),
               onPressed: _ocupado
@@ -123,68 +146,25 @@ class _PantallaEjecucionState extends ConsumerState<PantallaEjecucion> {
                       () =>
                           _repo.iniciar(widget.tareaId, usuarioId: _usuarioId),
                     ),
-              icon: const Icon(Icons.play_arrow),
-              label: const Text('Iniciar labor'),
+              icon: const Icon(Icons.play_arrow_rounded),
+              label: const Text('Empezar la labor'),
             ),
             const SizedBox(height: 16),
           ],
-          if (d.tarea.requiereQr) ...[
-            if (d.qrVerificado)
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE6F2EA),
-                  borderRadius: BorderRadius.circular(10),
+          Row(
+            children: [
+              const Expanded(child: Rotulo('Marcá lo que hiciste')),
+              Text(
+                '${d.completados} de ${d.items.length}',
+                key: const ValueKey('avance'),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: ColoresTrazaLabor.textoSecundario,
                 ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.verified,
-                      color: ColoresTrazaLabor.enLinea,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'QR verificado: ${d.unidad.nombre}',
-                        style: const TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w600,
-                          color: ColoresTrazaLabor.enLinea,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              )
-            else
-              OutlinedButton.icon(
-                key: const ValueKey('boton-escanear'),
-                onPressed: _ocupado || !abierta ? null : () => _escanear(d),
-                icon: const Icon(Icons.qr_code_scanner),
-                label: const Text('Escanear código del lugar'),
               ),
-            if (_mensajeQr != null) ...[
-              const SizedBox(height: 8),
-              CajaMensaje([_mensajeQr!]),
             ],
-            const SizedBox(height: 20),
-          ],
-          Text(
-            'Lista de verificación · ${d.completados} de $total ítems',
-            key: const ValueKey('avance'),
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
           ),
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: LinearProgressIndicator(
-              value: total == 0 ? 0 : d.completados / total,
-              minHeight: 10,
-              color: ColoresTrazaLabor.verdeCampo,
-              backgroundColor: const Color(0xFFDDE3DF),
-            ),
-          ),
-          const SizedBox(height: 12),
           for (final item in d.items)
             _ItemEjecucion(
               key: ValueKey(item.id),
@@ -201,12 +181,11 @@ class _PantallaEjecucionState extends ConsumerState<PantallaEjecucion> {
             ),
           const SizedBox(height: 20),
           if (abierta)
-            FilledButton.icon(
+            FilledButton(
               key: const ValueKey('boton-cierre'),
               onPressed: () =>
                   context.push('/trabajador/tarea/${widget.tareaId}/cierre'),
-              icon: const Icon(Icons.flag_outlined),
-              label: const Text('Continuar al cierre'),
+              child: const Text('Seguir'),
             ),
         ],
       ),
@@ -223,30 +202,40 @@ class _Requisitos extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final evidencia = switch (d.evidenciaRequerida) {
-      EvidenciaRequerida.ninguna => 'Sin evidencia obligatoria',
-      EvidenciaRequerida.foto => 'Pide una foto',
-      EvidenciaRequerida.audio => 'Pide un audio',
-      EvidenciaRequerida.fotoYAudio => 'Pide foto y audio',
+      EvidenciaRequerida.ninguna => null,
+      EvidenciaRequerida.foto => 'Al terminar, una foto',
+      EvidenciaRequerida.audio => 'Al terminar, un audio',
+      EvidenciaRequerida.fotoYAudio => 'Al terminar, foto y audio',
     };
+    if (evidencia == null && !d.tarea.requiereQr) return const SizedBox();
+    Widget chip(IconData icono, String texto) => Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: ColoresTrazaLabor.borde),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icono, size: 18, color: ColoresTrazaLabor.verdeCampo),
+          const SizedBox(width: 6),
+          Text(texto, style: const TextStyle(fontSize: 14.5)),
+        ],
+      ),
+    );
     return Wrap(
       spacing: 8,
       runSpacing: 8,
       children: [
-        Chip(
-          avatar: const Icon(Icons.photo_camera_outlined, size: 20),
-          label: Text(evidencia, style: const TextStyle(fontSize: 15)),
-        ),
-        if (d.tarea.requiereQr)
-          const Chip(
-            avatar: Icon(Icons.qr_code_2, size: 20),
-            label: Text('Pide escanear el QR', style: TextStyle(fontSize: 15)),
-          ),
+        if (evidencia != null) chip(Icons.photo_camera_outlined, evidencia),
+        if (d.tarea.requiereQr) chip(Icons.qr_code_2, 'Escanear el QR'),
       ],
     );
   }
 }
 
-/// Un ítem de la lista: casilla para los de tildar; campo y "Guardar" para
+/// Un ítem de la lista: casilla grande para los de tildar; campo y ✓ para
 /// número o texto. Corregir un valor registra un evento nuevo: lo anterior
 /// queda en la bitácora.
 class _ItemEjecucion extends StatefulWidget {
@@ -266,7 +255,9 @@ class _ItemEjecucion extends StatefulWidget {
 }
 
 class _ItemEjecucionState extends State<_ItemEjecucion> {
-  late final _texto = TextEditingController(text: widget.item.valor);
+  late final _texto = TextEditingController(
+    text: widget.item.valor?.replaceAll('.', ','),
+  );
   bool _editando = false;
 
   @override
@@ -275,21 +266,32 @@ class _ItemEjecucionState extends State<_ItemEjecucion> {
     super.dispose();
   }
 
+  Future<void> _guardar() async {
+    await widget.onGuardar(_texto.text);
+    if (mounted) setState(() => _editando = false);
+  }
+
   @override
   Widget build(BuildContext context) {
     final item = widget.item;
     final tipo = TipoRespuesta.desdeValor(item.tipoRespuesta);
-    final titulo = Text(
-      item.descripcion + (item.obligatorio ? '' : ' (opcional)'),
-      style: const TextStyle(fontSize: 17),
+    final titulo = item.descripcion + (item.obligatorio ? '' : ' (opcional)');
+    final borde = item.completado
+        ? const BorderSide(color: ColoresTrazaLabor.verdeCampo, width: 2)
+        : const BorderSide(color: ColoresTrazaLabor.borde, width: 1.2);
+    final forma = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(10),
+      side: borde,
     );
 
     if (tipo == TipoRespuesta.check) {
       return Card(
+        shape: forma,
         child: CheckboxListTile(
-          minTileHeight: 64,
+          minTileHeight: 62,
           value: item.completado,
-          title: titulo,
+          shape: forma,
+          title: Text(titulo, style: const TextStyle(fontSize: 17)),
           controlAffinity: ListTileControlAffinity.leading,
           onChanged: item.completado || !widget.habilitado
               ? null
@@ -299,39 +301,65 @@ class _ItemEjecucionState extends State<_ItemEjecucion> {
     }
 
     final mostrarCampo = !item.completado || _editando;
+    final esNumero = tipo == TipoRespuesta.numero;
+    final valorVisible = esNumero
+        ? (item.valor ?? '').replaceAll('.', ',')
+        : item.valor ?? '';
+
+    final campo = TextField(
+      controller: _texto,
+      enabled: widget.habilitado,
+      keyboardType: esNumero
+          ? const TextInputType.numberWithOptions(decimal: true)
+          : TextInputType.text,
+      textAlign: esNumero ? TextAlign.end : TextAlign.start,
+      textCapitalization: TextCapitalization.sentences,
+      style: const TextStyle(fontSize: 18),
+      onSubmitted: (_) => _guardar(),
+      decoration: InputDecoration(
+        isDense: true,
+        hintText: esNumero ? '0' : 'Escribí la respuesta',
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 12,
+        ),
+      ),
+    );
+    final botonGuardar = IconButton.filled(
+      tooltip: 'Guardar',
+      onPressed: widget.habilitado ? _guardar : null,
+      icon: const Icon(Icons.check),
+      style: IconButton.styleFrom(
+        backgroundColor: ColoresTrazaLabor.verdeCampo,
+        minimumSize: const Size(48, 48),
+      ),
+    );
+
     return Card(
+      shape: forma,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  item.completado
-                      ? Icons.check_circle
-                      : Icons.radio_button_unchecked,
-                  color: item.completado
-                      ? ColoresTrazaLabor.enLinea
-                      : ColoresTrazaLabor.textoSecundario,
-                ),
-                const SizedBox(width: 10),
-                Expanded(child: titulo),
-              ],
-            ),
-            const SizedBox(height: 8),
-            if (!mostrarCampo)
-              Row(
+        padding: const EdgeInsets.fromLTRB(16, 10, 10, 10),
+        child: !mostrarCampo
+            ? Row(
                 children: [
+                  const Icon(
+                    Icons.check_circle,
+                    color: ColoresTrazaLabor.verdeCampo,
+                  ),
+                  const SizedBox(width: 10),
                   Expanded(
-                    child: Text(
-                      tipo == TipoRespuesta.numero
-                          ? (item.valor ?? '').replaceAll('.', ',')
-                          : item.valor ?? '',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(titulo, style: const TextStyle(fontSize: 16)),
+                        Text(
+                          valorVisible,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   if (widget.habilitado)
@@ -344,39 +372,32 @@ class _ItemEjecucionState extends State<_ItemEjecucion> {
                     ),
                 ],
               )
-            else
-              Row(
+            : esNumero
+            // Número: rótulo a la izquierda y campo chico a la derecha.
+            ? Row(
                 children: [
                   Expanded(
-                    child: TextField(
-                      controller: _texto,
-                      enabled: widget.habilitado,
-                      keyboardType: tipo == TipoRespuesta.numero
-                          ? const TextInputType.numberWithOptions(decimal: true)
-                          : TextInputType.text,
-                      textCapitalization: TextCapitalization.sentences,
-                      style: const TextStyle(fontSize: 18),
-                      decoration: InputDecoration(
-                        hintText: tipo == TipoRespuesta.numero
-                            ? 'Número'
-                            : 'Respuesta',
-                      ),
-                    ),
+                    child: Text(titulo, style: const TextStyle(fontSize: 17)),
                   ),
+                  SizedBox(width: 96, child: campo),
                   const SizedBox(width: 8),
-                  FilledButton(
-                    onPressed: widget.habilitado
-                        ? () async {
-                            await widget.onGuardar(_texto.text);
-                            if (mounted) setState(() => _editando = false);
-                          }
-                        : null,
-                    child: const Text('Guardar'),
+                  botonGuardar,
+                ],
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(titulo, style: const TextStyle(fontSize: 17)),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(child: campo),
+                      const SizedBox(width: 8),
+                      botonGuardar,
+                    ],
                   ),
                 ],
               ),
-          ],
-        ),
       ),
     );
   }

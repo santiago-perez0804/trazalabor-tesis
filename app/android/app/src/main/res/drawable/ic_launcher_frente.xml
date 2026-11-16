@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ícono de TrazaLabor: una hoja con su nervadura (capa de frente del ícono adaptativo). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M36,74 C34,50 50,34 76,32 C78,58 62,74 36,74 Z" />
+    <path
+        android:strokeColor="#2D5F4F"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:pathData="M33,77 L66,44" />
+    <path
+        android:strokeColor="#2D5F4F"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:pathData="M48,62 L48,52 M56,54 L56,45 M48,62 L58,62 M56,54 L65,54" />
+</vector>

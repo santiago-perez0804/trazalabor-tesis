@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../tema.dart';
-import 'contador_pendientes.dart';
 import 'indicador_conexion.dart';
 
 /// Recuadro de aviso (error o confirmación) con texto grande y buen contraste.
@@ -13,8 +13,9 @@ class CajaMensaje extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color =
-        esError ? ColoresTrazaLabor.sinConexion : ColoresTrazaLabor.enLinea;
+    final color = esError
+        ? ColoresTrazaLabor.sinConexion
+        : ColoresTrazaLabor.enLinea;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
@@ -36,41 +37,38 @@ class CajaMensaje extends StatelessWidget {
   }
 }
 
-/// Fila con el contador de pendientes y el indicador de conexión, para las
-/// pantallas que no llevan el saludo (ambos tienen que verse siempre).
-class BarraEstado extends StatelessWidget {
-  const BarraEstado({super.key});
-
-  @override
-  Widget build(BuildContext context) => const Padding(
-        padding: EdgeInsets.only(bottom: 12),
-        child: Row(
-          children: [
-            Expanded(child: ContadorPendientes()),
-            SizedBox(width: 8),
-            IndicadorConexion(),
-          ],
-        ),
-      );
-}
-
 /// Aviso estándar después de guardar algo en el teléfono.
 void avisarGuardado(BuildContext context, String texto) {
   // Un nombre como "Juan P." ya trae el punto final.
   final frase = texto.replaceFirst(RegExp(r'\.\.$'), '.');
+  // Con señal se envía enseguida; sin señal queda en la bandeja de salida.
+  final enLinea =
+      ProviderScope.containerOf(
+        context,
+        listen: false,
+      ).read(hayConexionProvider).value ??
+      false;
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(
-      content: Text('$frase Se enviará al haber señal.',
-          style: const TextStyle(fontSize: 16)),
-    ));
+    ..showSnackBar(
+      SnackBar(
+        content: Text(
+          enLinea
+              ? '$frase Se está enviando.'
+              : '$frase Se enviará al haber señal.',
+          style: const TextStyle(fontSize: 16),
+        ),
+      ),
+    );
 }
 
 /// Pregunta de confirmación con botones grandes. Devuelve `true` si acepta.
-Future<bool> confirmar(BuildContext context,
-    {required String titulo,
-    required String texto,
-    required String accion}) async {
+Future<bool> confirmar(
+  BuildContext context, {
+  required String titulo,
+  required String texto,
+  required String accion,
+}) async {
   final r = await showDialog<bool>(
     context: context,
     builder: (context) => AlertDialog(

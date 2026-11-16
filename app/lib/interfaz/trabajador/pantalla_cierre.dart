@@ -9,7 +9,11 @@ import '../../dominio/archivo_evidencia.dart';
 import '../../infra/captura_evidencia.dart';
 import '../../repositorio/base_datos.dart';
 import '../../repositorio/repositorio_ejecucion.dart';
+import '../../dominio/catalogos.dart';
+import '../../dominio/validar_cierre.dart';
+import '../comunes/barra_app.dart';
 import '../comunes/caja_mensaje.dart';
+import '../comunes/piezas.dart';
 import '../proveedores.dart';
 import '../tema.dart';
 
@@ -101,14 +105,14 @@ class _PantallaCierreState extends ConsumerState<PantallaCierre> {
           usuarioId: _usuarioId,
           motivoAudioId: archivo.id,
         );
-        _terminar('Labor cerrada como no completada.');
+        _terminar('Labor cerrada sin terminar.');
       }
     });
   }
 
   Future<void> _cerrarCompletada() => _hacer(() async {
     await _repo.cerrarCompletada(widget.tareaId, usuarioId: _usuarioId);
-    _terminar('Labor completada.');
+    _terminar('Labor terminada.');
   });
 
   Future<void> _cerrarNoCompletadaConTexto() => _hacer(() async {
@@ -117,7 +121,7 @@ class _PantallaCierreState extends ConsumerState<PantallaCierre> {
       usuarioId: _usuarioId,
       motivo: _motivo.text,
     );
-    _terminar('Labor cerrada como no completada.');
+    _terminar('Labor cerrada sin terminar.');
   });
 
   void _terminar(String texto) {
@@ -130,73 +134,76 @@ class _PantallaCierreState extends ConsumerState<PantallaCierre> {
   Widget build(BuildContext context) {
     final d = ref.watch(detalleTareaProvider(widget.tareaId)).value;
     if (d == null) {
-      return Scaffold(
-        appBar: AppBar(),
-        body: const Center(child: CircularProgressIndicator()),
+      return const Scaffold(
+        appBar: BarraApp(titulo: 'Terminar la labor'),
+        body: Center(child: CircularProgressIndicator()),
       );
     }
+    final tipo = TipoLabor.desdeValor(d.tarea.tipoLabor);
     final cierre = d.validarCierreActual();
     // HU-007 c2: lo que falta para cerrar como completada, siempre a la vista.
     final faltantes = cierre.faltantes;
-    final resumen = [
-      '${d.fotos} ${d.fotos == 1 ? 'foto' : 'fotos'}',
-      '${d.audios} ${d.audios == 1 ? 'audio' : 'audios'}',
-    ].join(' · ');
+    final pedido = switch (d.evidenciaRequerida) {
+      EvidenciaRequerida.ninguna => 'Si querés, agregá una foto o un audio',
+      EvidenciaRequerida.foto => 'Te piden una foto',
+      EvidenciaRequerida.audio => 'Te piden un audio',
+      EvidenciaRequerida.fotoYAudio => 'Te piden una foto y un audio',
+    };
+    final agregado = [
+      if (d.fotos > 0) '${d.fotos} ${d.fotos == 1 ? 'foto' : 'fotos'}',
+      if (d.audios > 0) '${d.audios} ${d.audios == 1 ? 'audio' : 'audios'}',
+    ].join(' y ');
+    final grabandoEvidencia = _grabando && !_grabandoMotivo;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Cierre de labor')),
+      appBar: BarraApp(
+        titulo: 'Terminar la labor',
+        subtitulo: '${d.unidad.nombre} · ${tipo.etiqueta}',
+      ),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         children: [
-          const BarraEstado(),
-          Text(
-            '${d.unidad.nombre} · ${d.completados} de ${d.items.length} ítems',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-          ),
+          const IndicadorPasos(paso: 3),
           const SizedBox(height: 16),
+          Rotulo(pedido),
           Row(
             children: [
               Expanded(
-                child: FilledButton.icon(
+                child: BotonGrande(
                   key: const ValueKey('boton-foto'),
+                  icono: Icons.photo_camera_outlined,
+                  texto: 'Sacar foto',
                   onPressed: _ocupado || _grabando ? null : _tomarFoto,
-                  icon: const Icon(Icons.photo_camera),
-                  label: const Text('Tomar foto'),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: FilledButton.icon(
+                child: BotonGrande(
                   key: const ValueKey('boton-audio'),
-                  style: _grabando && !_grabandoMotivo
-                      ? FilledButton.styleFrom(
-                          backgroundColor: ColoresTrazaLabor.sinConexion,
-                        )
-                      : null,
+                  icono: grabandoEvidencia
+                      ? Icons.stop_rounded
+                      : Icons.mic_none,
+                  texto: grabandoEvidencia ? 'Detener' : 'Grabar audio',
+                  activo: grabandoEvidencia,
                   onPressed: _ocupado || _grabandoMotivo
                       ? null
                       : () => _alternarGrabacion(),
-                  icon: Icon(
-                    _grabando && !_grabandoMotivo ? Icons.stop : Icons.mic,
-                  ),
-                  label: Text(
-                    _grabando && !_grabandoMotivo ? 'Detener' : 'Grabar audio',
-                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            '$resumen adjuntos (comprimidos)',
-            style: const TextStyle(
-              fontSize: 16,
-              color: ColoresTrazaLabor.textoSecundario,
+          if (agregado.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            AvisoSuave(
+              icono: Icons.check,
+              titulo: 'Agregaste $agregado',
+              detalle: 'Ya quedó guardado en el teléfono, comprimido.',
             ),
-          ),
-          const SizedBox(height: 8),
-          for (final e in d.evidencias) _FilaEvidencia(e, _reproductor),
+            const SizedBox(height: 4),
+            for (final e in d.evidencias) _FilaEvidencia(e, _reproductor),
+          ],
           const SizedBox(height: 16),
+          const Rotulo('¿Pudiste terminar?'),
           if (faltantes.isNotEmpty) ...[
             CajaMensaje(faltantes),
             const SizedBox(height: 12),
@@ -206,38 +213,30 @@ class _PantallaCierreState extends ConsumerState<PantallaCierre> {
             onPressed: _ocupado || _grabando || !cierre.puedeCompletar
                 ? null
                 : _cerrarCompletada,
-            icon: const Icon(Icons.check_circle),
-            label: const Text('Completada'),
+            icon: const Icon(Icons.check),
+            label: const Text('Sí, terminé'),
           ),
           const SizedBox(height: 12),
-          OutlinedButton.icon(
+          BotonAlternativo(
             key: const ValueKey('boton-no-completada'),
-            onPressed: _ocupado || _grabando
+            texto: 'No pude terminar',
+            detalle: 'Contá el motivo con un audio',
+            onPressed: _ocupado || grabandoEvidencia
                 ? null
                 : () => setState(() => _noCompletada = !_noCompletada),
-            icon: const Icon(Icons.cancel_outlined),
-            label: const Text('No completada'),
           ),
           if (_noCompletada) ...[
             const SizedBox(height: 16),
-            const Text(
-              '¿Por qué no se pudo completar?',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 8),
-            FilledButton.icon(
-              style: _grabandoMotivo
-                  ? FilledButton.styleFrom(
-                      backgroundColor: ColoresTrazaLabor.sinConexion,
-                    )
-                  : null,
-              onPressed: _ocupado || (_grabando && !_grabandoMotivo)
+            const Rotulo('¿Por qué no se pudo terminar?'),
+            BotonGrande(
+              icono: _grabandoMotivo ? Icons.stop_rounded : Icons.mic_none,
+              texto: _grabandoMotivo
+                  ? 'Detener y cerrar la labor'
+                  : 'Contarlo con un audio',
+              activo: _grabandoMotivo,
+              onPressed: _ocupado || grabandoEvidencia
                   ? null
                   : () => _alternarGrabacion(motivo: true),
-              icon: Icon(_grabandoMotivo ? Icons.stop : Icons.mic),
-              label: Text(
-                _grabandoMotivo ? 'Terminar y cerrar' : 'Contarlo con un audio',
-              ),
             ),
             const SizedBox(height: 12),
             const Text('o escribilo:', style: TextStyle(fontSize: 16)),
@@ -257,12 +256,12 @@ class _PantallaCierreState extends ConsumerState<PantallaCierre> {
               onPressed: _ocupado || _grabando
                   ? null
                   : _cerrarNoCompletadaConTexto,
-              child: const Text('Cerrar como no completada'),
+              child: const Text('Cerrar sin terminar'),
             ),
           ],
           const SizedBox(height: 16),
           const Text(
-            'Se guarda en el teléfono. Se enviará al haber señal.',
+            'Todo queda guardado en el teléfono y se envía cuando haya señal.',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 15,
